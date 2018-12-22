@@ -18,11 +18,23 @@ int main(int argc, char** argv)
 	
 	warkod::Image<warkod::ColorfulPixel> baseImage(5, 5);
 	std::cerr << "Rozmiar: " << baseImage.width() << " " << baseImage.height() << std::endl;
-	std::cerr << "Piksel w: " << baseImage.at(2, 3).red() << std::endl;
 	
+	warkod::Image<warkod::BinaryPixel> binaryImage(3,3);
+	
+	int pixelId = 0;
 	for(warkod::ColorfulPixel pixel : baseImage)
 	{
-		std::cerr << "Piksel kolejny: " << pixel.red() << std::endl;
+		pixel.red(0.5);
+		std::cerr << "Piksel " << pixelId << ": " << pixel << std::endl;
+		pixelId++;
+	}
+	
+	pixelId = 0;
+	for(warkod::BinaryPixel pixel : binaryImage)
+	{
+		std::cerr << "Piksel " << pixelId << ": " << pixel << std::endl;
+		std::cerr << "Sąsiad prawy: " << pixel.neighbour(1, 0) << std::endl;
+		pixelId++;
 	}
 	
 	return(0);
