@@ -16,9 +16,14 @@ int main(int argc, char** argv)
 	
 	std::cerr << "Przetwarzanie " << imageFilename << std::endl;
 	
-	warkod::Image<warkod::ColorfulPixel> baseImage(20, 30);
+	warkod::Image<warkod::ColorfulPixel> baseImage(5, 5);
 	std::cerr << "Rozmiar: " << baseImage.width() << " " << baseImage.height() << std::endl;
 	std::cerr << "Piksel w: " << baseImage.at(2, 3).red() << std::endl;
+	
+	for(warkod::ColorfulPixel pixel : baseImage)
+	{
+		std::cerr << "Piksel kolejny: " << pixel.red() << std::endl;
+	}
 	
 	return(0);
 }
