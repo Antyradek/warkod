@@ -1,5 +1,8 @@
 #include <iostream>
 
+#include "image.hpp"
+#include "pixel.hpp"
+
 int main(int argc, char** argv)
 {
 	if(argc != 2)
@@ -12,6 +15,10 @@ int main(int argc, char** argv)
 	std::string imageFilename = argv[1];
 	
 	std::cerr << "Przetwarzanie " << imageFilename << std::endl;
+	
+	warkod::Image<warkod::ColorfulPixel> baseImage(20, 30);
+	std::cerr << "Rozmiar: " << baseImage.width() << " " << baseImage.height() << std::endl;
+	std::cerr << "Piksel w: " << baseImage.at(2, 3).red() << std::endl;
 	
 	return(0);
 }
