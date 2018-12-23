@@ -21,13 +21,29 @@ public:
 	AbstractPixel(const Image<T>& holdingImage, int x, int y);
 	/// Zwróć sąsiada o podaną ilość pikseli w bok
 	const T& neighbour(int differenceX, int differenceY) const;
+	/// Zwróć pozycję piksela
+	int imagePositionX() const;
+	/// Zwróć pozycję piksela
+	int imagePositionY() const;
 };
 
 template<typename T> 
-const T& warkod::AbstractPixel<T>::neighbour(int differenceX, int differenceY) const
+const T& AbstractPixel<T>::neighbour(int differenceX, int differenceY) const
 {
-	const T& val = image.peek(positionX + differenceX, positionY + differenceY);
+	const T& val = image.at(positionX + differenceX, positionY + differenceY);
 	return(val);
+}
+
+template<typename T>
+int AbstractPixel<T>::imagePositionX() const
+{
+	return positionX;
+}
+
+template<typename T>
+int AbstractPixel<T>::imagePositionY() const
+{
+	return positionY;
 }
 	
 /// Jeden, konkretny, kolorowy piksel w obrazie

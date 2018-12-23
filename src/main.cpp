@@ -33,7 +33,10 @@ int main(int argc, char** argv)
 	for(warkod::BinaryPixel pixel : binaryImage)
 	{
 		std::cerr << "Piksel " << pixelId << ": " << pixel << std::endl;
-		std::cerr << "Sąsiad prawy: " << pixel.neighbour(1, 0) << std::endl;
+		if(pixel.imagePositionX() + 1 < binaryImage.width())
+		{
+			std::cerr << "Sąsiad prawy: " << pixel.neighbour(1, 0) << std::endl;
+		}
 		pixelId++;
 	}
 	

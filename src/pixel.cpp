@@ -8,9 +8,6 @@ positionY(y)
 {	
 }
 
-
-
-
 warkod::ColorfulPixel::ColorfulPixel(const Image<warkod::ColorfulPixel>& holdingImage, int x, int y) :
 AbstractPixel(holdingImage, x, y),
 redValue(0),
@@ -18,7 +15,6 @@ greenValue(0),
 blueValue(0)
 {
 }
-
 
 double warkod::ColorfulPixel::red() const
 {

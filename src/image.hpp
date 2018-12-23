@@ -28,6 +28,8 @@ private:
 	const int imageHeight;
 	/// Kontener danych, ustawiony wierszami, więc dostęp jest przez [y][x]
 	std::vector<std::vector<T>> imageData;
+	/// Czy piksel z tym parametrami jest w obrazie
+	bool pixelInsideImage(int x, int y) const;
 	
 	/// Pozwala iterować piksele kolejno wiersz po wierszu
 	class iterator : public std::iterator<std::output_iterator_tag, T>
@@ -55,10 +57,10 @@ public:
 	int width() const;
 	/// Wysokość obrazu
 	int height() const;
-	/// Wartość piksela w danym punkcie
-	T& at(int x, int y, OutOfBoundsBehaviour outOfBoundsBehaviour = OutOfBoundsBehaviour::Forbid);
 	/// Niezmienialna wartość piksela w danym punkcie
-	const T& peek(int x, int y, OutOfBoundsBehaviour outOfBoundsBehaviour = OutOfBoundsBehaviour::Forbid) const;
+	const T& at(int x, int y, OutOfBoundsBehaviour outOfBoundsBehaviour = OutOfBoundsBehaviour::Forbid) const;
+	/// Wartość piksela w danym punkcie
+	T& at(int x, int y);
 	
 	/// Iterator na pierwszy piksel
 	iterator begin();
@@ -94,34 +96,9 @@ int Image<T>::height() const
 }
 
 template<typename T> 
-T& Image<T>::at(int x, int y, warkod::OutOfBoundsBehaviour outOfBoundsBehaviour)
+const T& Image<T>::at(int x, int y, warkod::OutOfBoundsBehaviour outOfBoundsBehaviour) const
 {
-	if(0 <= x && x < imageWidth && 0 <= y && y < imageHeight)
-	{
-		return(imageData.at(y).at(x));
-	}
-	else
-	{
-		std::stringstream ss;
-		switch(outOfBoundsBehaviour)
-		{
-			case Forbid:
-				//wyjątek
-				ss << "Piksel (" << x << "," << y << ") poza granicami obrazu o rozmiarach " << imageWidth << "×" << imageHeight;
-				throw std::out_of_range(ss.str());
-				break;
-			default:
-				//wyjątek
-				ss << "Niezapimplementowany " << outOfBoundsBehaviour;
-				throw std::runtime_error(ss.str());
-		}
-	}
-}
-
-template<typename T> 
-const T& Image<T>::peek(int x, int y, warkod::OutOfBoundsBehaviour outOfBoundsBehaviour) const
-{
-	if(0 <= x && x < imageWidth && 0 <= y && y < imageHeight)
+	if(pixelInsideImage(x, y))
 	{
 		// at() jest stałą funkcją tylko jeśli ma zwrócić stałą wartość
 		return(imageData.at(y).at(x));
@@ -136,12 +113,37 @@ const T& Image<T>::peek(int x, int y, warkod::OutOfBoundsBehaviour outOfBoundsBe
 				ss << "Piksel (" << x << "," << y << ") poza granicami obrazu o rozmiarach " << imageWidth << "×" << imageHeight;
 				throw std::out_of_range(ss.str());
 				break;
+			//TODO dla Zero stworzyć nowy piksel i zwrócić
+			//TODO dla Extend stworzyć nowy piksel, nadać odpowiednie wartości i zwrócić
 			default:
 				//wyjątek
 				ss << "Niezapimplementowany " << outOfBoundsBehaviour;
 				throw std::runtime_error(ss.str());
 		}
 	}
+}
+
+template<typename T> 
+T& Image<T>::at(int x, int y)
+{
+	if(pixelInsideImage(x, y))
+	{
+		// at() jest stałą funkcją tylko jeśli ma zwrócić stałą wartość
+		return(imageData.at(y).at(x));
+	}
+	else
+	{
+		//ponieważ zwracamy modyfikowalną referencję, to nie możemy zwrócić referencji do nieistniejącego obiektu
+		std::stringstream ss;
+		ss << "Piksel (" << x << "," << y << ") poza granicami obrazu o rozmiarach " << imageWidth << "×" << imageHeight;
+		throw std::out_of_range(ss.str());
+	}
+}
+
+template<typename T>
+bool Image<T>::pixelInsideImage(int x, int y) const
+{
+	return((0 <= x && x < imageWidth && 0 <= y && y < imageHeight));
 }
 
 template<typename T> 
