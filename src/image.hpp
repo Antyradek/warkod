@@ -65,7 +65,8 @@ public:
 	const T& at(int x, int y, OutOfBoundsBehaviour outOfBoundsBehaviour = OutOfBoundsBehaviour::Forbid) const;
 	/// Wartość piksela w danym punkcie
 	T& at(int x, int y);
-	
+	/// Obiekt obrazu biblioteki OpenCV
+	cv::Mat opencvImage();
 	/// Iterator na pierwszy piksel
 	iterator begin();
 	/// Iterator na ostatni piksel
@@ -202,10 +203,6 @@ T& Image<T>::iterator::operator*()
 		ss << "Indeks iteratora " << index << " jest za duży!";
 		throw(std::out_of_range(ss.str()));
 	}
-	
-	
 }
-
-
 
 }

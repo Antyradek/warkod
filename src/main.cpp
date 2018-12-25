@@ -15,11 +15,15 @@ int main(int argc, char** argv)
 	}
 	
 	std::string imageFilename = argv[1];
+	std::string tmpDir = "/tmp/warkod/";
 	
 	std::cerr << "Przetwarzanie " << imageFilename << std::endl;
 	cv::Mat image = cv::imread(imageFilename);
 	warkod::Image<warkod::ColorfulPixel> baseImage(image);
 	std::cerr << "Rozmiar: " << baseImage.width() << " " << baseImage.height() << std::endl;
+	cv::imwrite(tmpDir + "raw.jpg", baseImage.opencvImage());
+	
+	
 	
 	warkod::Image<warkod::BinaryPixel> binaryImage(3,3);
 	
