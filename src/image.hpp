@@ -1,7 +1,9 @@
 #pragma once
+#include <opencv2/core/core.hpp>
 #include <vector>
 #include <stdexcept>
 #include <sstream>
+#include <iostream>
 
 namespace warkod 
 {
@@ -53,6 +55,8 @@ private:
 public:
 	/// Zerowy obraz o określonych wymiarach
 	Image(int width, int height);
+	/// Obraz powstały z obiektu obrazu biblioteki OpenCV
+	Image(const cv::Mat& opencvImage);
 	/// Szerokość obrazu
 	int width() const;
 	/// Wysokość obrazu
@@ -82,6 +86,7 @@ imageHeight(height)
 		}
 	}
 }
+
 
 template<typename T> 
 int Image<T>::width() const
@@ -182,10 +187,23 @@ bool Image<T>::iterator::operator!=(const Image<T>::iterator& other) const
 template<typename T> 
 T& Image<T>::iterator::operator*()
 {
-	const int y = index / thisImage.imageHeight;
+	const int y = index / thisImage.imageWidth;
 	const int x = index % thisImage.imageWidth;
-	T& val = thisImage.at(x, y);
-	return(val);
+	try
+	{
+		T& val = thisImage.at(x, y);
+		return(val);
+	}
+	catch(std::out_of_range err)
+	{
+		std::cerr << thisImage.imageWidth << " " << thisImage.imageHeight << std::endl;
+		std::cerr << x << " " << y << std::endl;
+		std::stringstream ss;
+		ss << "Indeks iteratora " << index << " jest za duży!";
+		throw(std::out_of_range(ss.str()));
+	}
+	
+	
 }
 
 

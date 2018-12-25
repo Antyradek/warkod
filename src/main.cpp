@@ -1,4 +1,6 @@
 #include <iostream>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 #include "image.hpp"
 #include "pixel.hpp"
@@ -15,8 +17,8 @@ int main(int argc, char** argv)
 	std::string imageFilename = argv[1];
 	
 	std::cerr << "Przetwarzanie " << imageFilename << std::endl;
-	
-	warkod::Image<warkod::ColorfulPixel> baseImage(5, 5);
+	cv::Mat image = cv::imread(imageFilename);
+	warkod::Image<warkod::ColorfulPixel> baseImage(image);
 	std::cerr << "Rozmiar: " << baseImage.width() << " " << baseImage.height() << std::endl;
 	
 	warkod::Image<warkod::BinaryPixel> binaryImage(3,3);
@@ -25,7 +27,7 @@ int main(int argc, char** argv)
 	for(warkod::ColorfulPixel pixel : baseImage)
 	{
 		pixel.red(0.5);
-		std::cerr << "Piksel " << pixelId << ": " << pixel << std::endl;
+// 		std::cerr << "Piksel " << pixelId << ": " << pixel << std::endl;
 		pixelId++;
 	}
 	

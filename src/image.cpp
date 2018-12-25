@@ -1,19 +1,21 @@
 #include "image.hpp" 
+#include "pixel.hpp"
+#include <cassert>
 
-// template<typename T> 
-// warkod::Image<T>::Image(int width, int height) : imageWidth(width) , imageHeight(height)
-// {
-// }
-// 
-// template<typename T> 
-// int warkod::Image<T>::width() const
-// {
-// 	return(imageWidth);
-// }
-// 
-// template<typename T> 
-// int warkod::Image<T>::height() const
-// {
-// 	return(imageHeight);
-// }
-
+template<> 
+warkod::Image<warkod::ColorfulPixel>::Image(const cv::Mat& opencvImage) :
+Image(opencvImage.cols, opencvImage.rows)
+{
+	const cv::Mat_<cv::Vec3b> imageData = opencvImage;
+	for(warkod::ColorfulPixel pixel : *this)
+	{
+		//piksele w opencv ustawione są BGR
+		const int x = pixel.imagePositionX();
+		const int y = pixel.imagePositionY();
+		assert(x < opencvImage.cols);
+		assert(y < opencvImage.rows);
+		pixel.red(imageData(y, x)[2]);
+		pixel.green(imageData(y, x)[1]);
+		pixel.blue(imageData(y, x)[0]);
+	}
+}
