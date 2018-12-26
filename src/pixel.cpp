@@ -3,8 +3,8 @@
 template<typename T>
 warkod::AbstractPixel<T>::AbstractPixel(const Image<T>& holdingImage, int x, int y) :
 image(holdingImage),
-positionX(x),
-positionY(y)
+    imagePositionX (x),
+    imagePositionY (y)
 {	
 }
 
@@ -51,14 +51,14 @@ namespace warkod
 	
 std::ostream& operator<<(std::ostream& os, const warkod::ColorfulPixel& pixel)
 {
-	os << "[" << pixel.positionX << "×" << pixel.positionY << "]";
+	os << "[" << pixel.positionX() << "×" << pixel.positionY() << "]";
 	os << "(" << pixel.red() << "," << pixel.green() << "," << pixel.blue() << ")";
 	return os;
 }
 
 std::ostream& operator<<(std::ostream& os, const warkod::BinaryPixel& pixel)
 {
-	os << "[" << pixel.positionX << "×" << pixel.positionY << "]";
+	os << "[" << pixel.positionX() << "×" << pixel.positionY() << "]";
 	os << "(" << pixel.pixelValue << ")";
 	return os;
 }
@@ -69,3 +69,14 @@ AbstractPixel(holdingImage, x, y),
 pixelValue(false)
 {
 }
+
+bool warkod::BinaryPixel::value() const
+{
+	return pixelValue;
+}
+
+void warkod::BinaryPixel::value(bool value)
+{
+	pixelValue = value;
+}
+

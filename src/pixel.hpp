@@ -13,37 +13,37 @@ protected:
 	/// Trzymany obraz
 	const Image<T>& image;
 	/// Pozycja X w obrazie
-	const int positionX;
+	const int imagePositionX;
 	/// Pozycja Y w obrazie
-	const int positionY;
+	const int imagePositionY;
 public:
 	/// Piksel o odpowiedniej pozycji w obrazie
 	AbstractPixel(const Image<T>& holdingImage, int x, int y);
 	/// Zwróć sąsiada o podaną ilość pikseli w bok
 	const T& neighbour(int differenceX, int differenceY) const;
 	/// Zwróć pozycję piksela
-	int imagePositionX() const;
+	int positionX() const;
 	/// Zwróć pozycję piksela
-	int imagePositionY() const;
+	int positionY() const;
 };
 
 template<typename T> 
 const T& AbstractPixel<T>::neighbour(int differenceX, int differenceY) const
 {
-	const T& val = image.at(positionX + differenceX, positionY + differenceY);
+	const T& val = image.at( imagePositionX + differenceX, imagePositionY + differenceY);
 	return(val);
 }
 
 template<typename T>
-int AbstractPixel<T>::imagePositionX() const
+int AbstractPixel<T>::positionX() const
 {
-	return positionX;
+	return imagePositionX;
 }
 
 template<typename T>
-int AbstractPixel<T>::imagePositionY() const
+int AbstractPixel<T>::positionY() const
 {
-	return positionY;
+	return imagePositionY;
 }
 	
 /// Jeden, konkretny, kolorowy piksel w obrazie
@@ -84,8 +84,12 @@ private:
 	/// Wartość piksela
 	bool pixelValue;
 public:
-	/// Zgaszony piksel w obrazie
+	/// Obraz z każdym zgaszonym pikselem
 	BinaryPixel(const Image<BinaryPixel>& holdingImage, int x, int y);
+	/// Stan piksela
+	bool value() const;
+	/// Ustaw stan piksela
+	void value(bool value);
 	/// Wypisz wartość piksela
 	friend std::ostream& operator<<(std::ostream& os, const BinaryPixel& pixel);
 };
