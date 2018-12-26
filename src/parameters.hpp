@@ -18,5 +18,7 @@ public:
 	double lightBlueRadius = 0.9;
 	/// Próg czerni niebieskiego stożka
 	double darkBlueTreshold = 0.1;
+	/// Promień działania pola filtra medianowego
+	int medianFilterRadius = 2;
 };
 }

@@ -2,8 +2,9 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#include "image.hpp"
 #include "pixel.hpp"
+#include "median_filter.hpp"
+#include "image.hpp"
 #include "parameters.hpp"
 
 int main(int argc, char** argv)
@@ -17,17 +18,22 @@ int main(int argc, char** argv)
 	
 	std::string imageFilename = argv[1];
 	std::string tmpDir = "/tmp/warkod/";
+	warkod::Parameters parameters;
 	
 	//wczytanie obrazu
-	std::cerr << "Wczytywanie " << imageFilename << "... " << std::flush;
+	std::cerr << "Wczytywanie " << imageFilename << "... " << std::endl;
 	cv::Mat image = cv::imread(imageFilename);
 	warkod::Image<warkod::ColorfulPixel> baseImage(image);
 	cv::imwrite(tmpDir + "raw.jpg", baseImage.opencvImage());
-	std::cerr << "gotowe " << std::endl;
 	
-	warkod::Parameters parameters;
+	//zastosowanie filtra średnicowego
+	std::cerr << "Filtr średnicowy..." << std::endl;
+	warkod::MedianFilter medianFilter(parameters.medianFilterRadius);
+	baseImage.applyFilter(medianFilter);
+	cv::imwrite(tmpDir + "median.jpg", baseImage.opencvImage());
+
 	//oddzielenie czerwonego
-	std::cerr << "Oddzielanie czerwonego... " << std::flush;
+	std::cerr << "Oddzielanie czerwonego... " << std::endl;
 	warkod::Image<warkod::BinaryPixel> redImage(baseImage.width(),baseImage.height());
 	for(const warkod::ColorfulPixel& pixel : baseImage)
 	{
@@ -48,10 +54,9 @@ int main(int argc, char** argv)
 		}
 	}
 	cv::imwrite(tmpDir + "red.png", redImage.opencvImage());
-	std::cerr << "gotowe" << std::endl;
 	
 	//oddzielenie niebieskiego
-	std::cerr << "Oddzielanie niebieskiego... " << std::flush;
+	std::cerr << "Oddzielanie niebieskiego... " << std::endl;
 	warkod::Image<warkod::BinaryPixel> blueImage(baseImage.width(),baseImage.height());
 	for(const warkod::ColorfulPixel& pixel : baseImage)
 	{
@@ -72,28 +77,9 @@ int main(int argc, char** argv)
 		}
 	}
 	cv::imwrite(tmpDir + "blue.png", blueImage.opencvImage());
-	std::cerr << "gotowe" << std::endl;
 	
 	
-	
-// 	int pixelId = 0;
-// 	for(warkod::ColorfulPixel pixel : baseImage)
-// 	{
-// 		pixel.red(0.5);
-// // 		std::cerr << "Piksel " << pixelId << ": " << pixel << std::endl;
-// 		pixelId++;
-// 	}
-	
-// 	pixelId = 0;
-// 	for(warkod::BinaryPixel pixel : binaryImage)
-// 	{
-// 		std::cerr << "Piksel " << pixelId << ": " << pixel << std::endl;
-// 		if(pixel.imagePositionX() + 1 < binaryImage.width())
-// 		{
-// 			std::cerr << "Sąsiad prawy: " << pixel.neighbour(1, 0) << std::endl;
-// 		}
-// 		pixelId++;
-// 	}
+
 	
 	return(0);
 }

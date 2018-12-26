@@ -3,8 +3,8 @@
 template<typename T>
 warkod::AbstractPixel<T>::AbstractPixel(const Image<T>& holdingImage, int x, int y) :
 image(holdingImage),
-    imagePositionX (x),
-    imagePositionY (y)
+imagePositionX(x),
+imagePositionY(y)
 {	
 }
 
@@ -80,3 +80,14 @@ void warkod::BinaryPixel::value(bool value)
 	pixelValue = value;
 }
 
+void warkod::ColorfulPixel::copyValue(const warkod::ColorfulPixel& other)
+{
+	red(other.red());
+	green(other.green());
+	blue(other.blue());
+}
+
+void warkod::BinaryPixel::copyValue(const warkod::BinaryPixel& other)
+{
+	value(other.value());
+}

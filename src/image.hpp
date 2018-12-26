@@ -1,4 +1,5 @@
 #pragma once
+#include "filter.hpp"
 #include <opencv2/core/core.hpp>
 #include <vector>
 #include <stdexcept>
@@ -30,9 +31,6 @@ private:
 	const int imageHeight;
 	/// Kontener danych, ustawiony wierszami, więc dostęp jest przez [y][x]
 	std::vector<std::vector<T>> imageData;
-	/// Czy piksel z tym parametrami jest w obrazie
-	bool pixelInsideImage(int x, int y) const;
-	
 	/// Pozwala iterować piksele kolejno wiersz po wierszu
 	class iterator : public std::iterator<std::output_iterator_tag, T>
 	{
@@ -61,12 +59,17 @@ public:
 	int width() const;
 	/// Wysokość obrazu
 	int height() const;
+	/// Czy piksel z tą pozycją jest w obrazie
+	bool pixelInsideImage(int x, int y) const;
 	/// Niezmienialna wartość piksela w danym punkcie
 	const T& at(int x, int y, OutOfBoundsBehaviour outOfBoundsBehaviour = OutOfBoundsBehaviour::Forbid) const;
 	/// Wartość piksela w danym punkcie
 	T& at(int x, int y);
 	/// Obiekt obrazu biblioteki OpenCV
 	cv::Mat opencvImage();
+	/// Użyj filtra na całym obrazie
+	void applyFilter(const AbstractFilter<T>& filter);
+	
 	/// Iterator na pierwszy piksel
 	iterator begin();
 	/// Iterator na ostatni piksel
@@ -146,10 +149,24 @@ T& Image<T>::at(int x, int y)
 	}
 }
 
+
 template<typename T>
 bool Image<T>::pixelInsideImage(int x, int y) const
 {
 	return((0 <= x && x < imageWidth && 0 <= y && y < imageHeight));
+}
+
+template<typename T>
+void Image<T>::applyFilter(const AbstractFilter<T>& filter)
+{
+	//skopiuj oryginał
+	//TODO zmienna original jako const, doimplementować iterator const, żeby było koszernie
+	Image<T> original(*this);
+	for(const T& pixel : original)
+	{
+		T filtered = filter(pixel);
+		at(pixel.positionX(), pixel.positionY()).copyValue(filtered);
+	}
 }
 
 template<typename T> 
