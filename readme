@@ -6,6 +6,7 @@ __      ____ _ _ __| | _____   __| |
                                     
 Napisany w C++ w najnowszym standardzie.
 Użyj dołączonego CMake do kompilacji.
+Licencja GPL, gdyż MiT jest nadużywany przez korporacje i nie wspiera licencjonowanego oprogramowania w żaden sposób.
                                     
 Projekt używa:
 • opencv (testowane na wersji 4.0.0)
