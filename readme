@@ -4,9 +4,13 @@ __      ____ _ _ __| | _____   __| |
  \ V  V / (_| | |  |   < (_) | (_| |
   \_/\_/ \__,_|_|  |_|\_\___/ \__,_|
                                     
+WarKoD - Wykrywacz loga Warszawskich Kolei Dojazdowych
+                                    
+Program przyjmuje plik zdjęcia i wykrywa na nim logo Warszawskich Kolei Dojazdowych.
+                                    
 Napisany w C++ w najnowszym standardzie.
 Użyj dołączonego CMake do kompilacji.
-Licencja GPL, gdyż MiT jest nadużywany przez korporacje i nie wspiera licencjonowanego oprogramowania w żaden sposób.
+Licencja GPL.
                                     
 Projekt używa:
 • opencv (testowane na wersji 4.0.0)
@@ -31,5 +35,8 @@ Do zaimplementowania zostało:
 • Porównanie niezmienników z parametrami (w sposób odległości euklidesowej najlepiej)
 • Sprawdzenie odległości obiektów od siebie
 • Przetestowanie kompilacji na innych systemach (przynajmniej Ubuntu 16.04 LTS) i na Windowsie
-• (opcjonalnie) Optymalizacje i wielowątkowość
-• (opcjonalnie) Wczytywanie parametrów algorytmów z linii poleceń (może będzie potrzebny boost), a potem jakieś maszynowe ustawianie
+
+Opcjonalne funkcje:
+• Optymalizacje i wielowątkowość
+• Wczytywanie parametrów algorytmów z linii poleceń (może będzie potrzebny boost), a potem jakieś maszynowe ustawianie
+• Wykrywanie więcej jak jednego loga
