@@ -69,6 +69,8 @@ public:
 	cv::Mat opencvImage();
 	/// Użyj filtra na całym obrazie
 	void applyFilter(const AbstractFilter<T>& filter);
+	/// Wyodrębnij podobiekt z obrazu, usuń znaleziony obiekt z oryginału, ustaw argument
+	Image<T> findObject(bool& found);
 	
 	/// Iterator na pierwszy piksel
 	iterator begin();
@@ -122,7 +124,6 @@ const T& Image<T>::at(int x, int y, warkod::OutOfBoundsBehaviour outOfBoundsBeha
 				ss << "Piksel (" << x << "," << y << ") poza granicami obrazu o rozmiarach " << imageWidth << "×" << imageHeight;
 				throw std::out_of_range(ss.str());
 				break;
-			//TODO dla Zero stworzyć nowy piksel i zwrócić
 			//TODO dla Extend stworzyć nowy piksel, nadać odpowiednie wartości i zwrócić
 			default:
 				//wyjątek

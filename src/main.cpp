@@ -1,4 +1,6 @@
 #include <iostream>
+#include <sstream>
+#include <iomanip>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
@@ -78,8 +80,21 @@ int main(int argc, char** argv)
 	}
 	cv::imwrite(tmpDir + "blue.png", blueImage.opencvImage());
 	
-	
-
-	
+	//wyciąganie obiektów z czerwonego obrazu
+	std::cerr << "Wyciąganie obrazów z czerwonego..." << std::endl;
+	bool found = true;
+	int objectCounter = 1;
+	while(found)
+	{
+		warkod::Image<warkod::BinaryPixel> redObject = redImage.findObject(found);
+		if(found)
+		{
+			std::stringstream ss;
+			ss << tmpDir << "red_obj_" << std::setw(3) << std::setfill('0') << objectCounter << ".png";
+			std::cerr << "Wyciągnięto obiekt " << objectCounter << std::endl;
+			cv::imwrite(ss.str(), redObject.opencvImage());
+			objectCounter++;
+		}
+	}
 	return(0);
 }

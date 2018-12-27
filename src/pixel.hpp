@@ -20,7 +20,7 @@ public:
 	/// Piksel o odpowiedniej pozycji w obrazie
 	AbstractPixel(const Image<T>& holdingImage, int x, int y);
 	/// Zwróć sąsiada o podaną ilość pikseli w bok
-	const T& neighbour(int differenceX, int differenceY) const;
+	const T& neighbour(int differenceX, int differenceY, OutOfBoundsBehaviour outOfBoundsBehaviour = OutOfBoundsBehaviour::Forbid) const;
 	/// Czy piksel ma sąsiada o określoną ilość pikseli w bok
 	bool hasNeighbour(int differenceX, int differenceY) const;
 	/// Zwróć pozycję piksela
@@ -32,9 +32,9 @@ public:
 };
 
 template<typename T> 
-const T& AbstractPixel<T>::neighbour(int differenceX, int differenceY) const
+const T& AbstractPixel<T>::neighbour(int differenceX, int differenceY, OutOfBoundsBehaviour outOfBoundsBehaviour) const
 {
-	const T& val = image.at(imagePositionX + differenceX, imagePositionY + differenceY);
+	const T& val = image.at(imagePositionX + differenceX, imagePositionY + differenceY, outOfBoundsBehaviour);
 	return(val);
 }
 

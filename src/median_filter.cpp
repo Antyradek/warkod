@@ -13,6 +13,12 @@ warkod::ColorfulPixel warkod::MedianFilter::operator()(const warkod::ColorfulPix
 	std::vector<double> redPixels;
 	std::vector<double> greenPixels;
 	std::vector<double> bluePixels;
+	//zarezerwuj trochę przestrzeni dla optymalizacji
+	const int squareBorder = 2 * radius + 1;
+	redPixels.reserve(squareBorder * squareBorder);
+	greenPixels.reserve(squareBorder * squareBorder);
+	bluePixels.reserve(squareBorder * squareBorder);
+	
 	//umieść wszystkich sąsiadów w buforze
 	for(int skewY = -radius; skewY <= radius; skewY++)
 	{

@@ -9,7 +9,7 @@ class MedianFilter : public AbstractFilter<ColorfulPixel>
 {
 private:
 	/// Promień filtra kwadratowego, ile pikseli w bok jest brane pod uwagę
-	int radius;
+	const int radius;
 	
 public:
 	ColorfulPixel operator()(const ColorfulPixel& pixel) const override;
