@@ -115,3 +115,74 @@ warkod::Image<warkod::BinaryPixel> warkod::Image<warkod::BinaryPixel>::findObjec
 	}
 	return(objectImage);
 }
+
+
+template<>
+double warkod::Image<warkod::BinaryPixel>::calculateMoment(int p, int q) const
+{
+	double sum = 0;
+	for(int i = 1; i <= width(); i++)
+	{
+		for(int j = 1; j <= height(); j++)
+		{
+			//i i j są liczone od 1, ale piksele są oznaczane od 0
+			sum += std::pow(i, p) * std::pow(j, q) * at(i - 1, j - 1).value();
+		}
+	}
+	return(sum);
+}
+
+template<> 
+std::pair<double, double> warkod::Image<warkod::BinaryPixel>::calculateImageCentre() const
+{
+	std::pair<double, double> response;
+	response.first = calculateMoment(1, 0) / calculateMoment(0, 0);
+	response.second = calculateMoment(0, 1) / calculateMoment(0, 0);
+	return(response);
+}
+
+
+template<> 
+double warkod::Image<warkod::BinaryPixel>::calculateCentralMoment(int p, int q) const
+{
+	double sum = 0;
+	const std::pair<double, double> imageCenter = calculateImageCentre();
+	for(int i = 1; i <= width(); i++)
+	{
+		for(int j = 1; j <= height(); j++)
+		{
+			//i i j są liczone od 1, ale tablica obrazu jest liczona od 0
+			sum += std::pow(i - imageCenter.first, p) * std::pow(j - imageCenter.second, q) * at(i - 1, j - 1).value();
+		}
+	}
+	return(sum);
+}
+
+
+
+template<> 
+double warkod::Image<warkod::BinaryPixel>::calculateConstantMoment(warkod::ConstantMoment moment) const
+{
+	double M20;
+	double M02;
+	double m00;
+	switch(moment)
+	{
+		case Moment1:
+			// (M_20 + M_02) / m_00²
+			M20 = calculateCentralMoment(2, 0);
+			M02 = calculateCentralMoment(0, 2);
+			m00 = calculateMoment(0, 0);
+			std::cerr << "m00: " << m00 << std::endl;
+			std::cerr << "M20: " << M20 << std::endl;
+			std::cerr << "M02: " << M02 << std::endl;
+			return((M20 + M02) / (m00 * m00));
+			break;
+		default:
+			std::stringstream ss;
+			ss << "Niezaimplementowany rząd niezmiennika " << moment;
+			throw(std::runtime_error(ss.str()));
+	}
+	
+}
+

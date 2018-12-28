@@ -92,6 +92,7 @@ int main(int argc, char** argv)
 			std::stringstream ss;
 			ss << tmpDir << "red_obj_" << std::setw(3) << std::setfill('0') << objectCounter << ".png";
 			std::cerr << "Wyciągnięto obiekt " << objectCounter << std::endl;
+			std::cout << ss.str() << " M1 " << redObject.calculateConstantMoment(warkod::ConstantMoment::Moment1) << std::endl;
 			cv::imwrite(ss.str(), redObject.opencvImage());
 			objectCounter++;
 		}

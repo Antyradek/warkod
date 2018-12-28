@@ -20,6 +20,21 @@ enum OutOfBoundsBehaviour
 	Extend
 };
 	
+/// Niezmienniki momentowe
+enum ConstantMoment
+{
+	Moment1,
+	Moment2,
+	Moment3,
+	Moment4, 
+	Moment5,
+	Moment6,
+	Moment7,
+	Moment8,
+	Moment9,
+	Moment10
+};
+
 /// Reprezentuje jeden obraz o wartościach z szablonu
 template <typename T>
 class Image
@@ -69,8 +84,18 @@ public:
 	cv::Mat opencvImage();
 	/// Użyj filtra na całym obrazie
 	void applyFilter(const AbstractFilter<T>& filter);
+	
+	
 	/// Wyodrębnij podobiekt z obrazu, usuń znaleziony obiekt z oryginału, ustaw argument
 	Image<T> findObject(bool& found);
+	/// Oblicz dwuwymiarowy moment (m_{pq})
+	double calculateMoment(int p, int q) const;
+	/// Oblicz środek ciężkości obrazu
+	std::pair<double, double> calculateImageCentre() const;
+	/// Oblicz moment centralny obrazu (M_{pq})
+	double calculateCentralMoment(int p, int q) const;
+	/// Oblicz niezmiennik rzędu <1..10>
+	double calculateConstantMoment(ConstantMoment moment) const;
 	
 	/// Iterator na pierwszy piksel
 	iterator begin();
@@ -213,7 +238,7 @@ T& Image<T>::iterator::operator*()
 		T& val = thisImage.at(x, y);
 		return(val);
 	}
-	catch(std::out_of_range err)
+	catch(const std::out_of_range& err)
 	{
 		std::cerr << thisImage.imageWidth << " " << thisImage.imageHeight << std::endl;
 		std::cerr << x << " " << y << std::endl;

@@ -10,6 +10,7 @@ Program przyjmuje plik zdjęcia i wykrywa na nim logo Warszawskich Kolei Dojazdo
                                     
 Napisany w C++ w najnowszym standardzie.
 Użyj dołączonego CMake do kompilacji.
+Warto ustawić zmienną CXXFLAGS=-O2, co ustawi flagi kompilacji dla CMake, w celu przyspieszenia programu.
 Licencja GPL.
                                     
 Projekt używa:
