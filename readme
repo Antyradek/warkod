@@ -15,6 +15,7 @@ Licencja GPL.
                                     
 Projekt używa:
 • opencv (testowane na wersji 4.0.0)
+• pthread
 
 Algorytmy zostały zaimplementowane w C++, obiektowo. 
 Co oznacza, że program będzie wolniejszy niż alternatywne implementacje w C, bazujące na tablicach, raczej niż na kontenerach.
@@ -22,17 +23,20 @@ Nie ma póki co żadnej optymalizacji na żadnym etapie.
 Jednak dzięki obiektowości, kod jest mało awaryjny, czytelny (na ile C++ jest czytelne) i łatwy do debugu.
 
 Możliwe optymalizacje:
-• Wielowątkowość przetwarzania jednego obrazu
+• Wielowątkowość przetwarzania jednego obrazu przy segmentacji
 • Przetwarzanie fragmentu obrazu, zamiast całości
 • Odrzucanie niektórych obiektów na wstępie
+
+Optymalizacje:
+• Wielowątkowe stosowanie filtra, osobny wątek na każdy wiersz.
 
 Zaimplementowane funkcjonalności:
 • Filtr medianowy, kwadratowy o dowolnej wielkości
 • Rozdzielenie obrazu na obrazy binarne względem koloru
 • Rozdzielenie obrazu binarnego na spójne obiekty
+• Wyliczanie niezmienników obrazu
 
 Do zaimplementowania zostało:
-• Obliczanie niezmienników dla każdego obrazu
 • Porównanie niezmienników z parametrami (w sposób odległości euklidesowej najlepiej)
 • Sprawdzenie odległości obiektów od siebie
 • Przetestowanie kompilacji na innych systemach (przynajmniej Ubuntu 16.04 LTS) i na Windowsie

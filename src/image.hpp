@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <sstream>
 #include <iostream>
+#include <thread>
 
 namespace warkod 
 {
@@ -195,10 +196,28 @@ void Image<T>::applyFilter(const AbstractFilter<T>& filter)
 	//skopiuj oryginał
 	//TODO zmienna original jako const, doimplementować iterator const, żeby było koszernie
 	Image<T> original(*this);
-	for(const T& pixel : original)
+	std::vector<std::thread> threads;
+	
+	//dla każdego wiersza uruchamiany osobny wątek
+	//każdy wątek odczytuje niezmienny obraz oraz zapisuje do piksela w wyznaczonym wierszu, więc wątki nie powinny się gryźć
+	for(int row = 0; row < height(); row++)
 	{
-		T filtered = filter(pixel);
-		at(pixel.positionX(), pixel.positionY()).copyValue(filtered);
+		const int y = row;
+		//używanie funkcji lambda jako funkcji uruchamianej przez wątek
+		//zmienne w [] są używane w funkcji, & oznacza że jest używana referencja
+		threads.push_back(std::thread([&y, &filter, this]()
+		{
+			for(int x = 0; x < width(); x++)
+			{
+				const T filtered = filter(at(x, y));
+				at(x, y).copyValue(filtered);
+			}
+		}));
+	}
+	//czekanie na każdy wątek
+	for(std::thread& thread : threads)
+	{
+		thread.join();
 	}
 }
 
