@@ -162,14 +162,21 @@ warkod::NormalisedCentralMoments warkod::Image<warkod::BinaryPixel>::calculateNo
         for(int j = 1; j <= height(); j++)
         {
             //i i j są liczone od 1, ale tablica obrazu jest liczona od 0
-            double diffX = i - imageCenter.first;
-            double diffY = j - imageCenter.second;
-            double value = at(i - 1, j - 1).value();
-            double div = moments.m00;
+            const double diffX = i - imageCenter.first;
+            const double diffY = j - imageCenter.second;
+            const double value = at(i - 1, j - 1).value();
+            const double div = moments.m00;
+			const double div2 = div * div;
+			const double div2_5 = std::pow(div, 2.5);
 
             // N_{pq} = M_{pq} / m_{00}^{(p+q)/2+1}
-            ret.N02 += diffY * diffY * value / div / div;
-            ret.N20 += diffX * diffX * value / div / div;
+            ret.N02 += diffY * diffY * value / div2;
+            ret.N20 += diffX * diffX * value / div2;
+			ret.N11 += diffX * diffY * value / div2;
+			ret.N03 += diffY * diffY * diffY * value / div2_5;
+			ret.N30 += diffX * diffX * diffX * value / div2_5;
+			ret.N12 += diffX * diffY * diffY * value / div2_5;
+			ret.N21 += diffX * diffX * diffY * value / div2_5;
 
         }
     }
@@ -186,6 +193,8 @@ warkod::InvariantMoments warkod::Image<warkod::BinaryPixel>::calculateInvariantM
 
     //M1 = N_20 + N02
     ret.M1 = ncs.N20 + ncs.N02;
+	ret.M2 = (ncs.N20 - ncs.N02) * (ncs.N20 - ncs.N02) + 4 * ncs.N11 * ncs.N11;
+	ret.M3 = (ncs.N30 - 3 * ncs.N12) * (ncs.N30 - 3 * ncs.N12) + (3 * ncs.N21 - ncs.N03) * (3 * ncs.N21 - ncs.N03);
 
     return(ret);
 }

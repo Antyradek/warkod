@@ -101,6 +101,8 @@ int main(int argc, char** argv)
 			std::cerr << "Wyciągnięto obiekt " << objectCounter << std::endl;
 			warkod::InvariantMoments moments = redObject.calculateInvariantMoments();
 			std::cout << ss.str() << " M1 " << moments.M1 << std::endl;
+			std::cout << ss.str() << " M2 " << moments.M2 << std::endl;
+			std::cout << ss.str() << " M3 " << moments.M3 << std::endl;
 			cv::imwrite(ss.str(), redObject.opencvImage());
 			objectCounter++;
 		}

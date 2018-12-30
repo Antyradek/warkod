@@ -34,12 +34,20 @@ struct NormalisedCentralMoments
 {
 	double N02;
 	double N20;
+	double N11;
+	double N30;
+	double N03;
+	double N12;
+	double N21;
+
 };
 
 /// Niezmienniki momentowe (M_q)
 struct InvariantMoments
 {
 	double M1;
+	double M2;
+	double M3;
 };
 
 /// Reprezentuje jeden obraz o wartościach z szablonu
