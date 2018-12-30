@@ -19,20 +19,26 @@ enum OutOfBoundsBehaviour
 	/// Zwróć wartość najbliższej krawędzi
 	Extend
 };
-	
-/// Niezmienniki momentowe
-enum ConstantMoment
+
+/// Momenty obrazu (m_{pq})
+struct Moments
 {
-	Moment1,
-	Moment2,
-	Moment3,
-	Moment4, 
-	Moment5,
-	Moment6,
-	Moment7,
-	Moment8,
-	Moment9,
-	Moment10
+	double m01;
+	double m00;
+	double m10;
+};
+
+/// Znormalizowane centralne momenty obrazu (M_{pq})
+struct NormalisedCentralMoments
+{
+	double N02;
+	double N20;
+};
+
+/// Niezmienniki momentowe (M_q)
+struct InvariantMoments
+{
+	double M1;
 };
 
 /// Reprezentuje jeden obraz o wartościach z szablonu
@@ -88,14 +94,15 @@ public:
 	
 	/// Wyodrębnij podobiekt z obrazu, usuń znaleziony obiekt z oryginału, ustaw argument
 	Image<T> findObject(bool& found);
-	/// Oblicz dwuwymiarowy moment (m_{pq})
-	double calculateMoment(int p, int q) const;
+	/// Oblicz dwuwymiarowe momenty (m_{pq})
+	Moments calculateMoments() const;
 	/// Oblicz środek ciężkości obrazu
-	std::pair<double, double> calculateImageCentre() const;
-	/// Oblicz moment centralny obrazu (M_{pq})
-	double calculateCentralMoment(int p, int q) const;
+	[[deprecated]]
+	std::pair<double, double> calculateImageCenter() const;
+	/// Oblicz znormalizowane momenty centralne obrazu (N_{pq})
+	NormalisedCentralMoments calculateNormalisedCentralMoments() const;
 	/// Oblicz niezmiennik rzędu <1..10>
-	double calculateConstantMoment(ConstantMoment moment) const;
+	InvariantMoments calculateInvariantMoments() const;
 	
 	/// Iterator na pierwszy piksel
 	iterator begin();

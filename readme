@@ -41,3 +41,9 @@ Opcjonalne funkcje:
 • Optymalizacje i wielowątkowość
 • Wczytywanie parametrów algorytmów z linii poleceń (może będzie potrzebny boost), a potem jakieś maszynowe ustawianie
 • Wykrywanie więcej jak jednego loga
+
+Testy:
+Czerwona strzałka:
+M1 img01_mini: 0.251309
+M1 img02_mini: 0.2579
+M1 img03_mini: 0.272977

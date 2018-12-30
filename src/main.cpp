@@ -11,15 +11,22 @@
 
 int main(int argc, char** argv)
 {
-	if(argc != 2)
+	if(argc != 2 && argc != 3)
 	{
 		std::string programName(argv[0]);
-		std::cerr << "Użycie: " << programName << " OBRAZ" << std::endl;
+		std::cerr << "Użycie: " << programName << " OBRAZ [KATALOG_WYGENEROWANYCH]" << std::endl;
 		return(-1);
 	}
 	
 	std::string imageFilename = argv[1];
 	std::string tmpDir = "/tmp/warkod/";
+	
+	if(argc == 3)
+	{
+		tmpDir = argv[2];
+		tmpDir += "/";
+	}
+	
 	warkod::Parameters parameters;
 	
 	//wczytanie obrazu
@@ -28,8 +35,8 @@ int main(int argc, char** argv)
 	warkod::Image<warkod::ColorfulPixel> baseImage(image);
 	cv::imwrite(tmpDir + "raw.jpg", baseImage.opencvImage());
 	
-	//zastosowanie filtra średnicowego
-	std::cerr << "Filtr średnicowy..." << std::endl;
+	//zastosowanie filtra medianowego
+	std::cerr << "Filtr medianowy..." << std::endl;
 	warkod::MedianFilter medianFilter(parameters.medianFilterRadius);
 	baseImage.applyFilter(medianFilter);
 	cv::imwrite(tmpDir + "median.jpg", baseImage.opencvImage());
@@ -92,7 +99,8 @@ int main(int argc, char** argv)
 			std::stringstream ss;
 			ss << tmpDir << "red_obj_" << std::setw(3) << std::setfill('0') << objectCounter << ".png";
 			std::cerr << "Wyciągnięto obiekt " << objectCounter << std::endl;
-			std::cout << ss.str() << " M1 " << redObject.calculateConstantMoment(warkod::ConstantMoment::Moment1) << std::endl;
+			warkod::InvariantMoments moments = redObject.calculateInvariantMoments();
+			std::cout << ss.str() << " M1 " << moments.M1 << std::endl;
 			cv::imwrite(ss.str(), redObject.opencvImage());
 			objectCounter++;
 		}
