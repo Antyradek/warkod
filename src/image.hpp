@@ -194,8 +194,7 @@ template<typename T>
 void Image<T>::applyFilter(const AbstractFilter<T>& filter)
 {
 	//skopiuj oryginał
-	//TODO zmienna original jako const, doimplementować iterator const, żeby było koszernie
-	Image<T> original(*this);
+	const Image<T> original(*this);
 	std::vector<std::thread> threads;
 	
 	//dla każdego wiersza uruchamiany osobny wątek
@@ -205,11 +204,11 @@ void Image<T>::applyFilter(const AbstractFilter<T>& filter)
 		const int y = row;
 		//używanie funkcji lambda jako funkcji uruchamianej przez wątek
 		//zmienne w [] są używane w funkcji, & oznacza że jest używana referencja
-		threads.push_back(std::thread([&y, &filter, this]()
+		threads.push_back(std::thread([&y, &filter, this, &original]()
 		{
 			for(int x = 0; x < width(); x++)
 			{
-				const T filtered = filter(at(x, y));
+				const T filtered = filter(original.at(x, y));
 				at(x, y).copyValue(filtered);
 			}
 		}));
