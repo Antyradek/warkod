@@ -48,6 +48,13 @@ struct InvariantMoments
 	double M1;
 	double M2;
 	double M3;
+	double M4;
+	double M5;
+	double M6;
+	double M7;
+	double M8;
+	double M9;
+	double M10;
 };
 
 /// Reprezentuje jeden obraz o wartościach z szablonu

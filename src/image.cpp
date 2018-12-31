@@ -188,13 +188,20 @@ warkod::NormalisedCentralMoments warkod::Image<warkod::BinaryPixel>::calculateNo
 template<>
 warkod::InvariantMoments warkod::Image<warkod::BinaryPixel>::calculateInvariantMoments() const
 {
-    warkod::NormalisedCentralMoments ncs = calculateNormalisedCentralMoments();
+    const warkod::NormalisedCentralMoments ncs = calculateNormalisedCentralMoments();
     warkod::InvariantMoments ret = {};
 
     //M1 = N_20 + N02
     ret.M1 = ncs.N20 + ncs.N02;
 	ret.M2 = (ncs.N20 - ncs.N02) * (ncs.N20 - ncs.N02) + 4 * ncs.N11 * ncs.N11;
 	ret.M3 = (ncs.N30 - 3 * ncs.N12) * (ncs.N30 - 3 * ncs.N12) + (3 * ncs.N21 - ncs.N03) * (3 * ncs.N21 - ncs.N03);
+	ret.M4 = (ncs.N30 + ncs.N12) * (ncs.N30 + ncs.N12) + (ncs.N21 + ncs.N03) * (ncs.N21 + ncs.N03);
+	ret.M5 = (ncs.N30 - 3 * ncs.N12) * (ncs.N30 + ncs.N12) * ((ncs.N30 + ncs.N12) * (ncs.N30 + ncs.N12) - 3 * (ncs.N21 + ncs.N03) * (ncs.N21 + ncs.N03)) + (3 * ncs.N21 - ncs.N03) * (ncs.N21 + ncs.N03) * (3 * (ncs.N30 + ncs.N12) * (ncs.N30 + ncs.N12) - (ncs.N21 + ncs.N03) * (ncs.N21 + ncs.N03));
+	ret.M6 = (ncs.N20 - ncs.N02) * ((ncs.N30 + ncs.N12) * (ncs.N30 + ncs.N12) - (ncs.N21 + ncs.N03) * (ncs.N21 + ncs.N03)) + 4 * ncs.N11 * (ncs.N30 + ncs.N12) * (ncs.N21 + ncs.N03);
+	ret.M7 = ncs.N20 * ncs.N02 - ncs.N11 * ncs.N11;
+	ret.M8 = ncs.N30 * ncs.N12 + ncs.N21 * ncs.N03 - ncs.N12 * ncs.N12 - ncs.N21 * ncs.N21;
+	ret.M9 = ncs.N20 * (ncs.N21 * ncs.N03 - ncs.N12 * ncs.N12) + ncs.N02 * (ncs.N30 * ncs.N12 - ncs.N21 * ncs.N21) - ncs.N11 * (ncs.N30 * ncs.N03 - ncs.N21 * ncs.N12);
+	ret.M10 = (ncs.N30 * ncs.N03 - ncs.N12 * ncs.N21) * (ncs.N30 * ncs.N03 - ncs.N12 * ncs.N21) - 4 * (ncs.N30 * ncs.N12 - ncs.N21 * ncs.N21) * (ncs.N03 * ncs.N21 - ncs.N12);
 
     return(ret);
 }

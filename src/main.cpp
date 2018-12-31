@@ -103,6 +103,13 @@ int main(int argc, char** argv)
 			std::cout << ss.str() << " M1 " << moments.M1 << std::endl;
 			std::cout << ss.str() << " M2 " << moments.M2 << std::endl;
 			std::cout << ss.str() << " M3 " << moments.M3 << std::endl;
+			std::cout << ss.str() << " M4 " << moments.M4 << std::endl;
+			std::cout << ss.str() << " M5 " << moments.M5 << std::endl;
+			std::cout << ss.str() << " M6 " << moments.M6 << std::endl;
+			std::cout << ss.str() << " M7 " << moments.M7 << std::endl;
+			std::cout << ss.str() << " M8 " << moments.M8 << std::endl;
+			std::cout << ss.str() << " M9 " << moments.M9 << std::endl;
+			std::cout << ss.str() << " M10 " << moments.M10 << std::endl;
 			cv::imwrite(ss.str(), redObject.opencvImage());
 			objectCounter++;
 		}
