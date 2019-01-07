@@ -37,6 +37,7 @@ warkod::ColorfulPixel warkod::MedianFilter::operator()(const warkod::ColorfulPix
 	std::sort(greenPixels.begin(), greenPixels.end());
 	std::sort(bluePixels.begin(), bluePixels.end());
 	
+	//znajdź medianę
 	double medianRed = redPixels.at(redPixels.size() / 2);
 	double medianGreen = greenPixels.at(greenPixels.size() / 2);
 	double medianBlue = bluePixels.at(bluePixels.size() / 2);

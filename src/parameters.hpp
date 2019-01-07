@@ -20,5 +20,7 @@ public:
 	double darkBlueTreshold = 0.1;
 	/// Promień działania pola filtra medianowego
 	int medianFilterRadius = 2;
+	/// Szerokość otwarcia jako ułamek węższego boku obrazu, będzie zaokrąglone do całkowitych ilości pikseli
+	double openingWidth = 0.003;
 };
 }

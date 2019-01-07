@@ -92,6 +92,10 @@ public:
 	Image(int width, int height);
 	/// Obraz powstały z obiektu obrazu biblioteki OpenCV
 	Image(const cv::Mat& opencvImage);
+	/// Głęboka kopia obrazu
+	Image(const Image<T>& other);
+	/// Operator robi głęboką kopię, by zachować referencje pikseli
+	Image(Image<T>&& other);
 	/// Szerokość obrazu
 	int width() const;
 	/// Wysokość obrazu
@@ -141,6 +145,23 @@ imageHeight(height)
 	}
 }
 
+template<typename T>
+Image<T>::Image(const Image<T>& other) :
+Image(other.width(), other.height())
+{
+	//NOTE tak robimy, aby piksele miały referencję do nowego obrazu, a nie bezpośrednio skopiowaną
+	//przekopiuj wartości pikseli
+	for(T& pixel : *this)
+	{
+		pixel.copyValue(other.at(pixel.positionX(), pixel.positionY()));
+	}
+}
+
+template<typename T>
+Image<T>::Image(Image<T>&& other) :
+Image(other)
+{
+}
 
 template<typename T> 
 int Image<T>::width() const
@@ -218,15 +239,15 @@ void Image<T>::applyFilter(const AbstractFilter<T>& filter)
 	{
 		const int y = row;
 		//używanie funkcji lambda jako funkcji uruchamianej przez wątek
-		//zmienne w [] są używane w funkcji, & oznacza że jest używana referencja
-		threads.push_back(std::thread([&y, &filter, this, &original]()
-		{
+		//zmienne w [] są używane w funkcji, & oznacza, że jest używana referencja
+// 		threads.push_back(std::thread([&y, &filter, this, &original]()
+// 		{
 			for(int x = 0; x < width(); x++)
 			{
 				const T filtered = filter(original.at(x, y));
 				at(x, y).copyValue(filtered);
 			}
-		}));
+// 		}));
 	}
 	//czekanie na każdy wątek
 	for(std::thread& thread : threads)

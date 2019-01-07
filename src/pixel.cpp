@@ -72,7 +72,7 @@ pixelValue(false)
 
 bool warkod::BinaryPixel::value() const
 {
-	return pixelValue;
+	return(pixelValue);
 }
 
 void warkod::BinaryPixel::value(bool value)

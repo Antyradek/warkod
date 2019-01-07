@@ -8,6 +8,8 @@
 #include "median_filter.hpp"
 #include "image.hpp"
 #include "parameters.hpp"
+#include "dilation_filter.hpp"
+#include "erosion_filter.hpp"
 
 int main(int argc, char** argv)
 {
@@ -37,7 +39,7 @@ int main(int argc, char** argv)
 	
 	//zastosowanie filtra medianowego
 	std::cerr << "Filtr medianowy..." << std::endl;
-	warkod::MedianFilter medianFilter(parameters.medianFilterRadius);
+	const warkod::MedianFilter medianFilter(parameters.medianFilterRadius);
 	baseImage.applyFilter(medianFilter);
 	cv::imwrite(tmpDir + "median.jpg", baseImage.opencvImage());
 
@@ -87,6 +89,27 @@ int main(int argc, char** argv)
 	}
 	cv::imwrite(tmpDir + "blue.png", blueImage.opencvImage());
 	
+	//otwieranie
+	int openingDepth = parameters.openingWidth * std::min(baseImage.width(), baseImage.height());
+	std::cerr << "Otwieranie z głębią " << openingDepth << "..." << std::endl;
+	warkod::Image<warkod::ColorfulPixel> tempor(baseImage);
+
+	for(int i = 0; i < openingDepth; i++)
+	{
+		const warkod::ErosionFilter filter;
+		blueImage.applyFilter(filter);
+		redImage.applyFilter(filter);
+	}
+	for(int i = 0; i < openingDepth; i++)
+	{
+		const warkod::DilationFilter filter;
+		blueImage.applyFilter(filter);
+		redImage.applyFilter(filter);
+	}
+	cv::imwrite(tmpDir + "blue_opened.png", blueImage.opencvImage());
+	cv::imwrite(tmpDir + "red_opened.png", redImage.opencvImage());
+
+	
 	//wyciąganie obiektów z czerwonego obrazu
 	std::cerr << "Wyciąganie obrazów z czerwonego..." << std::endl;
 	bool found = true;
@@ -97,7 +120,7 @@ int main(int argc, char** argv)
 		if(found)
 		{
 			std::stringstream ss;
-			ss << tmpDir << "red_obj_" << std::setw(3) << std::setfill('0') << objectCounter << ".png";
+			ss << tmpDir << "red_obj_" << std::setw(4) << std::setfill('0') << objectCounter << ".png";
 			std::cerr << "Wyciągnięto obiekt " << objectCounter << std::endl;
 			warkod::InvariantMoments moments = redObject.calculateInvariantMoments();
 			std::cout << ss.str() << " M1 " << moments.M1 << std::endl;
@@ -111,6 +134,33 @@ int main(int argc, char** argv)
 			std::cout << ss.str() << " M9 " << moments.M9 << std::endl;
 			std::cout << ss.str() << " M10 " << moments.M10 << std::endl;
 			cv::imwrite(ss.str(), redObject.opencvImage());
+			objectCounter++;
+		}
+	}
+	
+	//wyciąganie obiektów z niebieskiego obrazu
+	std::cerr << "Wyciąganie obrazów z niebieskiego..." << std::endl;
+	found = true;
+	while(found)
+	{
+		warkod::Image<warkod::BinaryPixel> blueObject = blueImage.findObject(found);
+		if(found)
+		{
+			std::stringstream ss;
+			ss << tmpDir << "blue_obj_" << std::setw(4) << std::setfill('0') << objectCounter << ".png";
+			std::cerr << "Wyciągnięto obiekt " << objectCounter << std::endl;
+			warkod::InvariantMoments moments = blueObject.calculateInvariantMoments();
+			std::cout << ss.str() << " M1 " << moments.M1 << std::endl;
+			std::cout << ss.str() << " M2 " << moments.M2 << std::endl;
+			std::cout << ss.str() << " M3 " << moments.M3 << std::endl;
+			std::cout << ss.str() << " M4 " << moments.M4 << std::endl;
+			std::cout << ss.str() << " M5 " << moments.M5 << std::endl;
+			std::cout << ss.str() << " M6 " << moments.M6 << std::endl;
+			std::cout << ss.str() << " M7 " << moments.M7 << std::endl;
+			std::cout << ss.str() << " M8 " << moments.M8 << std::endl;
+			std::cout << ss.str() << " M9 " << moments.M9 << std::endl;
+			std::cout << ss.str() << " M10 " << moments.M10 << std::endl;
+			cv::imwrite(ss.str(), blueObject.opencvImage());
 			objectCounter++;
 		}
 	}
