@@ -96,6 +96,8 @@ public:
 	Image(const Image<T>& other);
 	/// Operator robi głęboką kopię, by zachować referencje pikseli
 	Image(Image<T>&& other);
+	/// Skopiuj wartości pikseli
+	Image<T>& operator=(const Image<T>& other);
 	/// Szerokość obrazu
 	int width() const;
 	/// Wysokość obrazu
@@ -156,6 +158,17 @@ Image(other.width(), other.height())
 		pixel.copyValue(other.at(pixel.positionX(), pixel.positionY()));
 	}
 }
+
+template<typename T>
+Image<T>& Image<T>::operator=(const Image<T>& other)
+{
+	for(T& pixel : *this)
+	{
+		pixel.copyValue(other.at(pixel.positionX(), pixel.positionY()));
+	}
+	return(*this);
+}
+
 
 template<typename T>
 Image<T>::Image(Image<T>&& other) :

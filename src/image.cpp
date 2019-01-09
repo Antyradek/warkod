@@ -167,16 +167,16 @@ warkod::NormalisedCentralMoments warkod::Image<warkod::BinaryPixel>::calculateNo
             const double value = at(i - 1, j - 1).value();
             const double div = moments.m00;
 			const double div2 = div * div;
-			const double div2_5 = std::pow(div, 2.5);
+			const double div3 = std::pow(div, 2.5);
 
             // N_{pq} = M_{pq} / m_{00}^{(p+q)/2+1}
             ret.N02 += diffY * diffY * value / div2;
             ret.N20 += diffX * diffX * value / div2;
 			ret.N11 += diffX * diffY * value / div2;
-			ret.N03 += diffY * diffY * diffY * value / div2_5;
-			ret.N30 += diffX * diffX * diffX * value / div2_5;
-			ret.N12 += diffX * diffY * diffY * value / div2_5;
-			ret.N21 += diffX * diffX * diffY * value / div2_5;
+			ret.N03 += diffY * diffY * diffY * value / div3;
+			ret.N30 += diffX * diffX * diffX * value / div3;
+			ret.N12 += diffX * diffY * diffY * value / div3;
+			ret.N21 += diffX * diffX * diffY * value / div3;
 
         }
     }
