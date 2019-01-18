@@ -35,19 +35,14 @@ Zaimplementowane funkcjonalności:
 • Rozdzielenie obrazu na obrazy binarne względem koloru
 • Rozdzielenie obrazu binarnego na spójne obiekty
 • Wyliczanie niezmienników obrazu
+• Porównywanie obiektów ze sobą
 
 Do zaimplementowania zostało:
-• Porównanie niezmienników z parametrami (w sposób odległości euklidesowej najlepiej)
-• Sprawdzenie odległości obiektów od siebie
+• Program wypluwa w statystykach wielkość obiektu (procent ekranu) i środek, niezmienniki idą tylko do tablicy
+• Sprawdzenie odległości obiektów od siebie (znaleźć strzałki i porównywać obiekty względem nich)
 • Przetestowanie kompilacji na innych systemach (przynajmniej Ubuntu 16.04 LTS) i na Windowsie
 
 Opcjonalne funkcje:
 • Optymalizacje i wielowątkowość
 • Wczytywanie parametrów algorytmów z linii poleceń (może będzie potrzebny boost), a potem jakieś maszynowe ustawianie
 • Wykrywanie więcej jak jednego loga
-
-Testy:
-Czerwona strzałka:
-M1 img01_mini: 0.251309
-M1 img02_mini: 0.2579
-M1 img03_mini: 0.272977

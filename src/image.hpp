@@ -55,6 +55,7 @@ struct InvariantMoments
 	double M8;
 	double M9;
 	double M10;
+	double momentsArray[10];
 };
 
 /// Reprezentuje jeden obraz o wartościach z szablonu

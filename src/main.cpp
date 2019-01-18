@@ -14,7 +14,7 @@
 /// Oblicz odległość euklidesową obiektu o określonych niezmiennikach od podanego wzoru
 double calculateEuclidianDistance(const warkod::InvariantMoments& invariantMoments, const warkod::ObjectParameters& parameters)
 {
-	double invariants[10] = {invariantMoments.M1, invariantMoments.M2, invariantMoments.M3, invariantMoments.M4, invariantMoments.M5, invariantMoments.M6, invariantMoments.M7, invariantMoments.M8, invariantMoments.M9, invariantMoments.M10};
+	const double invariants[10] = {invariantMoments.M1, invariantMoments.M2, invariantMoments.M3, invariantMoments.M4, invariantMoments.M5, invariantMoments.M6, invariantMoments.M7, invariantMoments.M8, invariantMoments.M9, invariantMoments.M10};
 	
 	double sum = 0;
 	std::cerr << "Odległości: ";
@@ -142,20 +142,16 @@ int main(int argc, char** argv)
 			ss << tmpDir << "obj_" << std::setw(4) << std::setfill('0') << objectCounter << ".png";
 			std::cerr << "Wyciągnięto obiekt " << objectCounter << std::endl;
 			warkod::InvariantMoments moments = redObject.calculateInvariantMoments();
-			std::cout << ss.str() << " M1 " << moments.M1 << std::endl;
-			std::cout << ss.str() << " M2 " << moments.M2 << std::endl;
-			std::cout << ss.str() << " M3 " << moments.M3 << std::endl;
-			std::cout << ss.str() << " M4 " << moments.M4 << std::endl;
-			std::cout << ss.str() << " M5 " << moments.M5 << std::endl;
-			std::cout << ss.str() << " M6 " << moments.M6 << std::endl;
-			std::cout << ss.str() << " M7 " << moments.M7 << std::endl;
-			std::cout << ss.str() << " M8 " << moments.M8 << std::endl;
-			std::cout << ss.str() << " M9 " << moments.M9 << std::endl;
-			std::cout << ss.str() << " M10 " << moments.M10 << std::endl;
+			std::cout << objectCounter << " ";
+			for(int i = 0; i < 10; i++)
+			{
+				std::cout << moments.momentsArray[i] << " ";
+			}
+			std::cout << std::endl;
 			cv::imwrite(ss.str(), redObject.opencvImage());
 			objectCounter++;
 			
-			double redArrowDistance = calculateEuclidianDistance(moments, parameters.redArrowParams);
+			double redArrowDistance = calculateEuclidianDistance(moments, parameters.arrowParams);
 			std::cerr << "Odległość czerwonej strzałki: " << redArrowDistance << std::endl;
 			if(redArrowDistance < minRedArrowDistance)
 			{
@@ -186,20 +182,16 @@ int main(int argc, char** argv)
 			ss << tmpDir << "obj_" << std::setw(4) << std::setfill('0') << objectCounter << ".png";
 			std::cerr << "Wyciągnięto obiekt " << objectCounter << std::endl;
 			warkod::InvariantMoments moments = blueObject.calculateInvariantMoments();
-			std::cout << ss.str() << " M1 " << moments.M1 << std::endl;
-			std::cout << ss.str() << " M2 " << moments.M2 << std::endl;
-			std::cout << ss.str() << " M3 " << moments.M3 << std::endl;
-			std::cout << ss.str() << " M4 " << moments.M4 << std::endl;
-			std::cout << ss.str() << " M5 " << moments.M5 << std::endl;
-			std::cout << ss.str() << " M6 " << moments.M6 << std::endl;
-			std::cout << ss.str() << " M7 " << moments.M7 << std::endl;
-			std::cout << ss.str() << " M8 " << moments.M8 << std::endl;
-			std::cout << ss.str() << " M9 " << moments.M9 << std::endl;
-			std::cout << ss.str() << " M10 " << moments.M10 << std::endl;
+			std::cout << objectCounter << " ";
+			for(int i = 0; i < 10; i++)
+			{
+				std::cout << moments.momentsArray[i] << " ";
+			}
+			std::cout << std::endl;
 			cv::imwrite(ss.str(), blueObject.opencvImage());
 			objectCounter++;
 			
-			double blueArrowDistance = calculateEuclidianDistance(moments, parameters.blueArrowParams);
+			double blueArrowDistance = calculateEuclidianDistance(moments, parameters.arrowParams);
 			if(blueArrowDistance < minBlueArrowDistance)
 			{
 				minBlueArrowDistance = blueArrowDistance;
