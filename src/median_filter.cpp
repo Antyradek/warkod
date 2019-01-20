@@ -26,9 +26,9 @@ warkod::ColorfulPixel warkod::MedianFilter::operator()(const warkod::ColorfulPix
 		{
 			if(pixel.hasNeighbour(skewX, skewY))
 			{
-				redPixels.push_back(pixel.neighbour(skewX, skewY).red());
-				greenPixels.push_back(pixel.neighbour(skewX, skewY).green());
-				bluePixels.push_back(pixel.neighbour(skewX, skewY).blue());
+				redPixels.push_back(pixel.neighbour(skewX, skewY).value().red);
+				greenPixels.push_back(pixel.neighbour(skewX, skewY).value().green);
+				bluePixels.push_back(pixel.neighbour(skewX, skewY).value().blue);
 			}
 		}
 	}
@@ -44,9 +44,7 @@ warkod::ColorfulPixel warkod::MedianFilter::operator()(const warkod::ColorfulPix
 	
 	//stwórz i zwróć nowy piksel
 	warkod::ColorfulPixel newPixel(pixel);
-	newPixel.red(medianRed);
-	newPixel.green(medianGreen);
-	newPixel.blue(medianBlue);
+	newPixel.value(warkod::Color({medianRed, medianGreen, medianBlue}));
 	
 	return(newPixel);
 }

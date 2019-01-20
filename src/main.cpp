@@ -12,7 +12,7 @@
 #include "erosion_filter.hpp"
 
 /// Oblicz odległość euklidesową obiektu o określonych niezmiennikach od podanego wzoru
-double calculateEuclidianDistance(const warkod::InvariantMoments& invariantMoments, const warkod::ObjectParameters& parameters)
+double calculateEuclidianDistance(const warkod::ObjectFeatures& invariantMoments, const warkod::ObjectParameters& parameters)
 {
 	const double invariants[10] = {invariantMoments.M1, invariantMoments.M2, invariantMoments.M3, invariantMoments.M4, invariantMoments.M5, invariantMoments.M6, invariantMoments.M7, invariantMoments.M8, invariantMoments.M9, invariantMoments.M10};
 	
@@ -24,9 +24,10 @@ double calculateEuclidianDistance(const warkod::InvariantMoments& invariantMomen
 		std::cerr << "M" << i + 1 << " " << std::sqrt(squaredDistance) << " ";
 		sum += squaredDistance * parameters.weights[i];
 	}
-	return(std::sqrt(sum));
 	std::cerr << std::endl;
+	return(std::sqrt(sum));
 }
+
 
 int main(int argc, char** argv)
 {
@@ -53,6 +54,7 @@ int main(int argc, char** argv)
 	cv::Mat image = cv::imread(imageFilename);
 	warkod::Image<warkod::ColorfulPixel> baseImage(image);
 	cv::imwrite(tmpDir + "raw.jpg", baseImage.opencvImage());
+	warkod::Image<warkod::ColorfulPixel> outputImage(baseImage.width(), baseImage.height());
 	
 	//zastosowanie filtra medianowego
 	std::cerr << "Filtr medianowy..." << std::endl;
@@ -65,13 +67,13 @@ int main(int argc, char** argv)
 	warkod::Image<warkod::BinaryPixel> redImage(baseImage.width(),baseImage.height());
 	for(const warkod::ColorfulPixel& pixel : baseImage)
 	{
-		double radius = ((parameters.lightRedRadius - parameters.darkRedRadius)) * pixel.red() + parameters.darkRedRadius;
-		if(pixel.blue() * pixel.blue() + pixel.green() * pixel.green() > radius * radius)
+		double radius = ((parameters.lightRedRadius - parameters.darkRedRadius)) * pixel.value().red + parameters.darkRedRadius;
+		if(std::pow(pixel.value().blue, 2) + std::pow(pixel.value().green, 2) > std::pow(radius, 2))
 		{
 			//nie mieści się w stożku
 			redImage.at(pixel.positionX(), pixel.positionY()).value(false);
 		}
-		else if(pixel.red() < parameters.darkRedTreshold)
+		else if(pixel.value().red < parameters.darkRedTreshold)
 		{
 			//ciemna część ucięta
 			redImage.at(pixel.positionX(), pixel.positionY()).value(false);
@@ -88,13 +90,13 @@ int main(int argc, char** argv)
 	warkod::Image<warkod::BinaryPixel> blueImage(baseImage.width(),baseImage.height());
 	for(const warkod::ColorfulPixel& pixel : baseImage)
 	{
-		double radius = ((parameters.lightBlueRadius - parameters.darkBlueRadius)) * pixel.blue() + parameters.darkBlueRadius;
-		if(pixel.red() * pixel.red() + pixel.green() * pixel.green() > radius * radius)
+		double radius = ((parameters.lightBlueRadius - parameters.darkBlueRadius)) * pixel.value().blue + parameters.darkBlueRadius;
+		if(std::pow(pixel.value().red, 2) + std::pow(pixel.value().green, 2) > std::pow(radius, 2))
 		{
 			//nie mieści się w stożku
 			blueImage.at(pixel.positionX(), pixel.positionY()).value(false);
 		}
-		else if(pixel.blue() < parameters.darkBlueTreshold)
+		else if(pixel.value().blue < parameters.darkBlueTreshold)
 		{
 			//ciemna część ucięta
 			blueImage.at(pixel.positionX(), pixel.positionY()).value(false);
@@ -141,26 +143,29 @@ int main(int argc, char** argv)
 			std::stringstream ss;
 			ss << tmpDir << "obj_" << std::setw(4) << std::setfill('0') << objectCounter << ".png";
 			std::cerr << "Wyciągnięto obiekt " << objectCounter << std::endl;
-			warkod::InvariantMoments moments = redObject.calculateInvariantMoments();
+			warkod::ObjectFeatures moments = redObject.calculateInvariantMoments();
 			std::cout << objectCounter << " ";
 			for(int i = 0; i < 10; i++)
 			{
 				std::cout << moments.momentsArray[i] << " ";
 			}
+			std::cout << moments.objectFill;
 			std::cout << std::endl;
 			cv::imwrite(ss.str(), redObject.opencvImage());
 			objectCounter++;
 			
-			double redArrowDistance = calculateEuclidianDistance(moments, parameters.arrowParams);
-			std::cerr << "Odległość czerwonej strzałki: " << redArrowDistance << std::endl;
-			if(redArrowDistance < minRedArrowDistance)
+			if(moments.objectFill > parameters.arrowParams.objectFill)
 			{
-				minRedArrowDistance = redArrowDistance;
-				bestRedArrowObject = redObject;
+				double redArrowDistance = calculateEuclidianDistance(moments, parameters.arrowParams);
+				std::cerr << "Odległość czerwonej strzałki: " << redArrowDistance << std::endl;
+				if(redArrowDistance < minRedArrowDistance)
+				{
+					minRedArrowDistance = redArrowDistance;
+					bestRedArrowObject = redObject;
+				}
 			}
 		}
 	}
-	cv::imwrite(tmpDir + "best_red_arrow.png", bestRedArrowObject.opencvImage());
 	
 	//wyciąganie obiektów z niebieskiego obrazu
 	std::cerr << "Wyciąganie obrazów z niebieskiego..." << std::endl;
@@ -181,53 +186,72 @@ int main(int argc, char** argv)
 			std::stringstream ss;
 			ss << tmpDir << "obj_" << std::setw(4) << std::setfill('0') << objectCounter << ".png";
 			std::cerr << "Wyciągnięto obiekt " << objectCounter << std::endl;
-			warkod::InvariantMoments moments = blueObject.calculateInvariantMoments();
+			warkod::ObjectFeatures moments = blueObject.calculateInvariantMoments();
 			std::cout << objectCounter << " ";
 			for(int i = 0; i < 10; i++)
 			{
 				std::cout << moments.momentsArray[i] << " ";
 			}
+			std::cout << moments.objectFill;
 			std::cout << std::endl;
 			cv::imwrite(ss.str(), blueObject.opencvImage());
 			objectCounter++;
 			
-			double blueArrowDistance = calculateEuclidianDistance(moments, parameters.arrowParams);
-			if(blueArrowDistance < minBlueArrowDistance)
+			if(moments.objectFill > parameters.arrowParams.objectFill)
 			{
-				minBlueArrowDistance = blueArrowDistance;
-				bestBlueArrowObject = blueObject;
+				double blueArrowDistance = calculateEuclidianDistance(moments, parameters.arrowParams);
+				if(blueArrowDistance < minBlueArrowDistance)
+				{
+					minBlueArrowDistance = blueArrowDistance;
+					bestBlueArrowObject = blueObject;
+				}
+				std::cerr << "Odległość niebieskiej strzałki: " << blueArrowDistance << std::endl;
 			}
-			std::cerr << "Odległość niebieskiej strzałki: " << blueArrowDistance << std::endl;
 			
-			double letterWDistance = calculateEuclidianDistance(moments, parameters.letterWParams);
-			if(letterWDistance < minLetterWDistance)
+			if(moments.objectFill > parameters.letterWParams.objectFill)
 			{
-				minLetterWDistance = letterWDistance;
-				bestLetterWObject = blueObject;
+				double letterWDistance = calculateEuclidianDistance(moments, parameters.letterWParams);
+				if(letterWDistance < minLetterWDistance)
+				{
+					minLetterWDistance = letterWDistance;
+					bestLetterWObject = blueObject;
+				}
+				std::cerr << "Odległość litery W: " << letterWDistance << std::endl;
 			}
-			std::cerr << "Odległość litery W: " << letterWDistance << std::endl;
-			
-			double letterKDistance = calculateEuclidianDistance(moments, parameters.letterKParams);
-			if(letterKDistance < minLetterKDistance)
+			if(moments.objectFill > parameters.letterKParams.objectFill)
 			{
-				minLetterKDistance = letterKDistance;
-				bestLetterKObject = blueObject;
+				double letterKDistance = calculateEuclidianDistance(moments, parameters.letterKParams);
+				if(letterKDistance < minLetterKDistance)
+				{
+					minLetterKDistance = letterKDistance;
+					bestLetterKObject = blueObject;
+				}
+				std::cerr << "Odległość litery K: " << letterKDistance << std::endl;
 			}
-			std::cerr << "Odległość litery K: " << letterKDistance << std::endl;
-			
-			double letterDDistance = calculateEuclidianDistance(moments, parameters.letterDParams);
-			if(letterDDistance < minLetterDDistance)
+			if(moments.objectFill > parameters.letterDParams.objectFill)
 			{
-				minLetterDDistance = letterDDistance;
-				bestLetterDObject = blueObject;
+				double letterDDistance = calculateEuclidianDistance(moments, parameters.letterDParams);
+				if(letterDDistance < minLetterDDistance)
+				{
+					minLetterDDistance = letterDDistance;
+					bestLetterDObject = blueObject;
+				}
+				std::cerr << "Odległość litery D: " << letterDDistance << std::endl;
 			}
-			std::cerr << "Odległość litery D: " << letterDDistance << std::endl;
 			
 		}
 	}
-	cv::imwrite(tmpDir + "best_blue_arrow.png", bestBlueArrowObject.opencvImage());
-	cv::imwrite(tmpDir + "best_letter_w.png", bestLetterWObject.opencvImage());
-	cv::imwrite(tmpDir + "best_letter_k.png", bestLetterKObject.opencvImage());
-	cv::imwrite(tmpDir + "best_letter_d.png", bestLetterDObject.opencvImage());
+	//wypisz odpowiedź
+	const warkod::Color redTint = {1, 0, 0};
+	const warkod::Color blueTint = {0, 0, 1};
+	const warkod::Color letterWTint = {0.3, 0, 0.7};
+	const warkod::Color letterKTint = {0.5, 0, 0.5};
+	const warkod::Color letterDTint = {0.7, 0, 0.3};
+	outputImage.addImage(bestBlueArrowObject, blueTint);
+	outputImage.addImage(bestRedArrowObject, redTint);
+	outputImage.addImage(bestLetterWObject, letterWTint);
+	outputImage.addImage(bestLetterKObject, letterKTint);
+	outputImage.addImage(bestLetterDObject, letterDTint);
+	cv::imwrite(tmpDir + "output.png", outputImage.opencvImage());
 	return(0);
 }

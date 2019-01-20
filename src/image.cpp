@@ -22,9 +22,10 @@ warkod::Image<warkod::ColorfulPixel>::Image(const cv::Mat& opencvImage) :
         const int y = pixel.positionY();
         assert(x < opencvImage.cols);
         assert(y < opencvImage.rows);
-        pixel.red(static_cast<double>(imageData(y, x)[2]) / std::numeric_limits<uint8_t>::max());
-        pixel.green(static_cast<double>(imageData(y, x)[1]) / std::numeric_limits<uint8_t>::max());
-        pixel.blue(static_cast<double>(imageData(y, x)[0]) / std::numeric_limits<uint8_t>::max());
+        double red = static_cast<double>(imageData(y, x)[2]) / std::numeric_limits<uint8_t>::max();
+        double green = static_cast<double>(imageData(y, x)[1]) / std::numeric_limits<uint8_t>::max();
+        double blue = static_cast<double>(imageData(y, x)[0]) / std::numeric_limits<uint8_t>::max();
+		pixel.value(warkod::Color({red, green, blue}));
     }
 }
 
@@ -39,9 +40,9 @@ cv::Mat warkod::Image<warkod::ColorfulPixel>::opencvImage()
         const int x = pixel.positionX();
         const int y = pixel.positionY();
         //ustawienie pikseli BGR
-        imageData(y, x)[0] = pixel.blue() * std::numeric_limits<uint8_t>::max();
-        imageData(y, x)[1] = pixel.green() * std::numeric_limits<uint8_t>::max();
-        imageData(y, x)[2] = pixel.red() * std::numeric_limits<uint8_t>::max();
+        imageData(y, x)[0] = pixel.value().blue * std::numeric_limits<uint8_t>::max();
+        imageData(y, x)[1] = pixel.value().green * std::numeric_limits<uint8_t>::max();
+        imageData(y, x)[2] = pixel.value().red * std::numeric_limits<uint8_t>::max();
     }
     return(returnedImage);
 }
@@ -188,10 +189,41 @@ warkod::NormalisedCentralMoments warkod::Image<warkod::BinaryPixel>::calculateNo
 
 
 template<>
-warkod::InvariantMoments warkod::Image<warkod::BinaryPixel>::calculateInvariantMoments() const
+warkod::ObjectFeatures warkod::Image<warkod::BinaryPixel>::calculateInvariantMoments() const
 {
-    const warkod::NormalisedCentralMoments ncs = calculateNormalisedCentralMoments();
-    warkod::InvariantMoments ret = {};
+	warkod::Moments moments = calculateMoments();
+    std::pair<double, double> imageCenter;
+    imageCenter.first = moments.m10 / moments.m00;
+    imageCenter.second = moments.m01 / moments.m00;
+
+    warkod::NormalisedCentralMoments ncs = {};
+
+    //NOTE taniej jest liczyć wszystkie potrzebne momenty centralne jednocześnie, niż dla każdego dawać metodę i przelatywać obraz osobno
+    for(int i = 1; i <= width(); i++)
+    {
+        for(int j = 1; j <= height(); j++)
+        {
+            //i i j są liczone od 1, ale tablica obrazu jest liczona od 0
+            const double diffX = i - imageCenter.first;
+            const double diffY = j - imageCenter.second;
+            const double value = at(i - 1, j - 1).value();
+            const double div = moments.m00;
+			const double div2 = div * div;
+			const double div3 = std::pow(div, 2.5);
+
+            // N_{pq} = M_{pq} / m_{00}^{(p+q)/2+1}
+            ncs.N02 += diffY * diffY * value / div2;
+            ncs.N20 += diffX * diffX * value / div2;
+			ncs.N11 += diffX * diffY * value / div2;
+			ncs.N03 += diffY * diffY * diffY * value / div3;
+			ncs.N30 += diffX * diffX * diffX * value / div3;
+			ncs.N12 += diffX * diffY * diffY * value / div3;
+			ncs.N21 += diffX * diffX * diffY * value / div3;
+
+        }
+    }
+	
+    warkod::ObjectFeatures ret = {};
 
     ret.M1 = ncs.N20 + ncs.N02;
 	ret.M2 = (ncs.N20 - ncs.N02) * (ncs.N20 - ncs.N02) + 4 * ncs.N11 * ncs.N11;
@@ -208,6 +240,21 @@ warkod::InvariantMoments warkod::Image<warkod::BinaryPixel>::calculateInvariantM
 	std::initializer_list<double> initList({ret.M1, ret.M2, ret.M3, ret.M4, ret.M5, ret.M6, ret.M7, ret.M8, ret.M9, ret.M10});
 	std::copy(initList.begin(), initList.end(), ret.momentsArray);
 	
+	ret.imageCenter = imageCenter;
+	ret.objectFill = static_cast<double>(moments.m00) / (width() * height());
+	
     return(ret);
 }
 
+template <>
+template <>
+void warkod::Image<warkod::ColorfulPixel>::addImage(warkod::Image<warkod::BinaryPixel>& other, const warkod::Color& tint)
+{
+	for(warkod::BinaryPixel& pixel : other)
+	{
+		if(pixel.value())
+		{
+			at(pixel.positionX(), pixel.positionY()).value(tint);
+		}
+	}
+}

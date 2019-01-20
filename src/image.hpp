@@ -39,11 +39,10 @@ struct NormalisedCentralMoments
 	double N03;
 	double N12;
 	double N21;
-
 };
 
-/// Niezmienniki momentowe (M_q)
-struct InvariantMoments
+/// Niezmienniki momentowe (M_q) i inne cechy obiektu
+struct ObjectFeatures 
 {
 	double M1;
 	double M2;
@@ -55,7 +54,20 @@ struct InvariantMoments
 	double M8;
 	double M9;
 	double M10;
+	/// Tablica wszystkich niezmienników
 	double momentsArray[10];
+	/// Wielkość obiektu, ułamek wypełnienia obrazu
+	double objectFill;
+	/// Środek obrazu
+	std::pair<double, double> imageCenter;
+};
+
+/// Trójskładowy kolor
+struct Color
+{
+	double red;
+	double green;
+	double blue;
 };
 
 /// Reprezentuje jeden obraz o wartościach z szablonu
@@ -113,8 +125,6 @@ public:
 	cv::Mat opencvImage();
 	/// Użyj filtra na całym obrazie
 	void applyFilter(const AbstractFilter<T>& filter);
-	
-	
 	/// Wyodrębnij podobiekt z obrazu, usuń znaleziony obiekt z oryginału, ustaw argument
 	Image<T> findObject(bool& found);
 	/// Oblicz dwuwymiarowe momenty (m_{pq})
@@ -125,7 +135,10 @@ public:
 	/// Oblicz znormalizowane momenty centralne obrazu (N_{pq})
 	NormalisedCentralMoments calculateNormalisedCentralMoments() const;
 	/// Oblicz niezmiennik rzędu <1..10>
-	InvariantMoments calculateInvariantMoments() const;
+	ObjectFeatures calculateInvariantMoments() const;
+	/// Połącz obraz z innym obrazem
+	template <typename U>
+	void addImage(Image<U>& other, const Color& tint);
 	
 	/// Iterator na pierwszy piksel
 	iterator begin();
@@ -152,20 +165,17 @@ template<typename T>
 Image<T>::Image(const Image<T>& other) :
 Image(other.width(), other.height())
 {
-	//NOTE tak robimy, aby piksele miały referencję do nowego obrazu, a nie bezpośrednio skopiowaną
-	//przekopiuj wartości pikseli
-	for(T& pixel : *this)
-	{
-		pixel.copyValue(other.at(pixel.positionX(), pixel.positionY()));
-	}
+	//tworzymy pusty obraz i przyporządkowywujemy wartości pikseli z zewnątrz
+	*this = other;
 }
 
 template<typename T>
 Image<T>& Image<T>::operator=(const Image<T>& other)
 {
+	//kopiuj jedynie wartości pikseli
 	for(T& pixel : *this)
 	{
-		pixel.copyValue(other.at(pixel.positionX(), pixel.positionY()));
+		pixel.value(other.at(pixel.positionX(), pixel.positionY()).value());
 	}
 	return(*this);
 }
@@ -254,14 +264,14 @@ void Image<T>::applyFilter(const AbstractFilter<T>& filter)
 		const int y = row;
 		//używanie funkcji lambda jako funkcji uruchamianej przez wątek
 		//zmienne w [] są używane w funkcji, & oznacza, że jest używana referencja
-// 		threads.push_back(std::thread([&y, &filter, this, &original]()
-// 		{
+		threads.push_back(std::thread([y, &filter, this, &original]()
+		{
 			for(int x = 0; x < width(); x++)
 			{
 				const T filtered = filter(original.at(x, y));
-				at(x, y).copyValue(filtered);
+				at(x, y).value(filtered.value());
 			}
-// 		}));
+		}));
 	}
 	//czekanie na każdy wątek
 	for(std::thread& thread : threads)

@@ -16,43 +16,13 @@ blueValue(0)
 {
 }
 
-double warkod::ColorfulPixel::red() const
-{
-	return(redValue);
-}
-
-void warkod::ColorfulPixel::red(double value)
-{
-	redValue = value;
-}
-
-double warkod::ColorfulPixel::blue() const
-{
-	return(blueValue);
-}
-
-void warkod::ColorfulPixel::blue(double value)
-{
-	blueValue = value;
-}
-
-double warkod::ColorfulPixel::green() const
-{
-	return(greenValue);
-}
-
-void warkod::ColorfulPixel::green(double value)
-{
-	greenValue = value;
-}
-
 namespace warkod
 {
 	
 std::ostream& operator<<(std::ostream& os, const warkod::ColorfulPixel& pixel)
 {
 	os << "[" << pixel.positionX() << "×" << pixel.positionY() << "]";
-	os << "(" << pixel.red() << "," << pixel.green() << "," << pixel.blue() << ")";
+	os << "(" << pixel.value().red << "," << pixel.value().green << "," << pixel.value().blue << ")";
 	return os;
 }
 
@@ -80,14 +50,12 @@ void warkod::BinaryPixel::value(bool value)
 	pixelValue = value;
 }
 
-void warkod::ColorfulPixel::copyValue(const warkod::ColorfulPixel& other)
+warkod::Color warkod::ColorfulPixel::value() const
 {
-	red(other.red());
-	green(other.green());
-	blue(other.blue());
+	return(colorValue);
 }
 
-void warkod::BinaryPixel::copyValue(const warkod::BinaryPixel& other)
+void warkod::ColorfulPixel::value(const warkod::Color& newValue)
 {
-	value(other.value());
+	colorValue = newValue;
 }

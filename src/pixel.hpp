@@ -27,8 +27,6 @@ public:
 	int positionX() const;
 	/// Zwróć pozycję piksela
 	int positionY() const;
-	/// Ustaw wartość piksela jako wartość drugiego piksela, coś jak konstruktor kopiujący, ale bez modyfikacji pozycji
-	virtual void copyValue(const T& other) = 0;
 };
 
 template<typename T> 
@@ -67,22 +65,16 @@ private:
 	/// Wartość niebieska
 	double blueValue;
 	
+	/// Wartość piksela
+	Color colorValue;
+	
 public:
 	/// Czarny piksel w obrazie
 	ColorfulPixel(const Image<ColorfulPixel>& holdingImage, int x, int y);
-	/// Czerwona składowa
-	double red() const;
-	/// Zielona składowa
-	double green() const;
-	/// Niebieska składowa
-	double blue() const;
-	/// Ustaw czerwoną składową
-	void red(double value);
-	/// Ustaw zieloną składową
-	void green(double value);
-	/// Ustaw niebieską składową
-	void blue(double value);
-	void copyValue(const ColorfulPixel& other) override;
+	/// Zwraca wartość piksela
+	Color value() const;
+	/// Ustawia wartość piksela
+	void value(const Color& newValue);
 	/// Wypisz trójkę wartości składowych piksela
 	friend std::ostream& operator<<(std::ostream& os, const ColorfulPixel& pixel);
 };
@@ -100,7 +92,6 @@ public:
 	bool value() const;
 	/// Ustaw stan piksela
 	void value(bool value);
-	void copyValue(const BinaryPixel& other) override;
 	/// Wypisz wartość piksela
 	friend std::ostream& operator<<(std::ostream& os, const BinaryPixel& pixel);
 };
