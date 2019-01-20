@@ -70,6 +70,14 @@ struct Color
 	double blue;
 };
 
+/// Typ krzyżyka do zaznaczania na obrazku
+enum MarkCrossType
+{
+	Dotted,
+	Smooth,
+	TrippleDotted
+};
+
 /// Reprezentuje jeden obraz o wartościach z szablonu
 template <typename T>
 class Image
@@ -139,6 +147,8 @@ public:
 	/// Połącz obraz z innym obrazem
 	template <typename U>
 	void addImage(Image<U>& other, const Color& tint);
+	/// Narysuj na obrazie krzyżyk do zaznaczania różnych rzeczy, opcjonalnie przerywany
+	void markCross(const std::pair<double, double>& crossCenter, const Color& tint, MarkCrossType type = MarkCrossType::Smooth, double circleRadius = 50);
 	
 	/// Iterator na pierwszy piksel
 	iterator begin();

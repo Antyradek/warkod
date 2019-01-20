@@ -258,3 +258,49 @@ void warkod::Image<warkod::ColorfulPixel>::addImage(warkod::Image<warkod::Binary
 		}
 	}
 }
+
+template<> 
+void warkod::Image<warkod::ColorfulPixel>::markCross(const std::pair<double, double>& crossCenter, const warkod::Color& tint, warkod::MarkCrossType type, double circleRadius)
+{
+	const int x = static_cast<int>(crossCenter.first);
+	const int y = static_cast<int>(crossCenter.second);
+	int dotModulo = 1;
+	if(type == MarkCrossType::Dotted)
+	{
+		dotModulo = 2;
+	}
+	else if(type == MarkCrossType::TrippleDotted)
+	{
+		dotModulo = 3;
+	}
+	
+	//po pionie
+	for(int i = y - circleRadius; i < y + circleRadius; i++)
+	{
+		if(i % dotModulo == 0 && pixelInsideImage(x, i))
+		{
+			at(x, i).value(tint);
+		}
+	}
+	//po poziomie
+	for(int i = x - circleRadius; i < x + circleRadius; i++)
+	{
+		if(i % dotModulo == 0 && pixelInsideImage(i, y))
+		{
+			
+			at(i, y).value(tint);
+		}
+	}
+	//okrąg, bo czemu nie
+
+	const double circleLength = 2 * circleRadius * 3.1415;
+	for(int i = 0; i < circleLength; i++)
+	{
+		const int posX = x + std::cos(i) * circleRadius;
+		const int posY = y + std::sin(i) * circleRadius;
+		if(i % dotModulo == 0 && pixelInsideImage(posX, posY))
+		{
+			at(posX, posY).value(tint);
+		}
+	}
+}
