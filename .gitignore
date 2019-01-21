@@ -1,3 +1,9 @@
 *.kdev4
 img/
 tests/
+*.dvi
+*.log
+*.aux
+*.backup
+*.out
+*.toc

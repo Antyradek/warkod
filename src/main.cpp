@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <iomanip>
 #include <opencv2/core/core.hpp>
@@ -16,6 +17,12 @@ typedef std::pair<double, double> point_t;
 
 /// Para dystansu punktu od najlepszego dopasowania
 typedef std::pair<double, point_t> centerDistance_t;
+
+/// Kolorowy obraz
+typedef warkod::Image<warkod::ColorfulPixel> ColorfulImage;
+
+/// Binarny obraz
+typedef warkod::Image<warkod::BinaryPixel> BinaryImage;
 
 /// Oblicz odległość ważoną obiektu o określonych niezmiennikach od podanego wzoru
 double calculateWeightedDistance(const warkod::ObjectFeatures& invariantMoments, const warkod::ObjectParameters& parameters)
@@ -36,42 +43,70 @@ double calculateDistance(const point_t& pointA, const point_t& pointB)
 	return(std::sqrt(std::pow(pointA.first - pointB.first, 2) + std::pow(pointA.second - pointB.second, 2)));
 }
 
+/// Sprawdź, czy te wielkości są równe w dopuszczalnym zakresie
+bool checkSoftEqual(double first, double second, double softness)
+{
+	double longer = 0;
+	double shorter = 0;
+	if(first > second)
+	{
+		longer = first;
+		shorter = second;
+	}
+	else
+	{
+		longer = second;
+		shorter = first;
+	}
+	double maxDiff = longer * softness;
+	return(shorter + maxDiff > longer);
+}
+
 int main(int argc, char** argv)
 {
-	if(argc != 2 && argc != 3)
+	if(argc != 3 && argc != 4)
 	{
 		std::string programName(argv[0]);
-		std::cerr << "Użycie: " << programName << " OBRAZ [KATALOG_WYGENEROWANYCH]" << std::endl;
+		std::cerr << "Użycie: " << programName << " OBRAZ WSKAZANY [KATALOG_WYGENEROWANYCH]" << std::endl;
 		return(-1);
 	}
 	
 	std::string imageFilename = argv[1];
-	std::string tmpDir = "/tmp/warkod/";
+	std::string outputFilename = argv[2];
+	std::string tmpDir = "/tmp/";
+	bool generatesDebug = false;
 	
-	if(argc == 3)
+	if(argc == 4)
 	{
-		tmpDir = argv[2];
+		tmpDir = argv[3];
 		tmpDir += "/";
+		generatesDebug = true;
 	}
 	
 	warkod::Parameters parameters;
 	
 	//wczytanie obrazu
 	std::cerr << "Wczytywanie " << imageFilename << "... " << std::endl;
-	cv::Mat image = cv::imread(imageFilename);
-	warkod::Image<warkod::ColorfulPixel> baseImage(image);
-	cv::imwrite(tmpDir + "raw.jpg", baseImage.opencvImage());
-	warkod::Image<warkod::ColorfulPixel> outputImage(baseImage.width(), baseImage.height());
+	ColorfulImage baseImage(cv::imread(imageFilename));
+	if(generatesDebug)
+	{
+		cv::imwrite(tmpDir + "raw.jpg", baseImage.opencvImage());
+	}
+	ColorfulImage outputImage(baseImage.width(), baseImage.height());
+
 	
 	//zastosowanie filtra medianowego
 	std::cerr << "Filtr medianowy..." << std::endl;
 	const warkod::MedianFilter medianFilter(parameters.medianFilterRadius);
 	baseImage.applyFilter(medianFilter);
-	cv::imwrite(tmpDir + "median.jpg", baseImage.opencvImage());
+	if(generatesDebug)
+	{
+		cv::imwrite(tmpDir + "median.jpg", baseImage.opencvImage());
+	}
 
 	//oddzielenie czerwonego
 	std::cerr << "Oddzielanie czerwonego... " << std::endl;
-	warkod::Image<warkod::BinaryPixel> redImage(baseImage.width(),baseImage.height());
+	BinaryImage redImage(baseImage.width(),baseImage.height());
 	for(const warkod::ColorfulPixel& pixel : baseImage)
 	{
 		double radius = ((parameters.lightRedRadius - parameters.darkRedRadius)) * pixel.value().red + parameters.darkRedRadius;
@@ -80,7 +115,7 @@ int main(int argc, char** argv)
 			//nie mieści się w stożku
 			redImage.at(pixel.positionX(), pixel.positionY()).value(false);
 		}
-		else if(pixel.value().red < parameters.darkRedTreshold)
+		else if(pixel.value().red < parameters.darkRedThreshold)
 		{
 			//ciemna część ucięta
 			redImage.at(pixel.positionX(), pixel.positionY()).value(false);
@@ -90,11 +125,14 @@ int main(int argc, char** argv)
 			redImage.at(pixel.positionX(), pixel.positionY()).value(true);
 		}
 	}
-	cv::imwrite(tmpDir + "red.png", redImage.opencvImage());
+	if(generatesDebug)
+	{
+		cv::imwrite(tmpDir + "red.png", redImage.opencvImage());
+	}
 	
 	//oddzielenie niebieskiego
 	std::cerr << "Oddzielanie niebieskiego... " << std::endl;
-	warkod::Image<warkod::BinaryPixel> blueImage(baseImage.width(),baseImage.height());
+	BinaryImage blueImage(baseImage.width(),baseImage.height());
 	for(const warkod::ColorfulPixel& pixel : baseImage)
 	{
 		double radius = ((parameters.lightBlueRadius - parameters.darkBlueRadius)) * pixel.value().blue + parameters.darkBlueRadius;
@@ -103,7 +141,7 @@ int main(int argc, char** argv)
 			//nie mieści się w stożku
 			blueImage.at(pixel.positionX(), pixel.positionY()).value(false);
 		}
-		else if(pixel.value().blue < parameters.darkBlueTreshold)
+		else if(pixel.value().blue < parameters.darkBlueThreshold)
 		{
 			//ciemna część ucięta
 			blueImage.at(pixel.positionX(), pixel.positionY()).value(false);
@@ -113,12 +151,14 @@ int main(int argc, char** argv)
 			blueImage.at(pixel.positionX(), pixel.positionY()).value(true);
 		}
 	}
-	cv::imwrite(tmpDir + "blue.png", blueImage.opencvImage());
+	if(generatesDebug)
+	{
+		cv::imwrite(tmpDir + "blue.png", blueImage.opencvImage());
+	}
 	
 	//otwieranie
-	int openingDepth = parameters.openingWidth * std::min(baseImage.width(), baseImage.height());
+	int openingDepth = parameters.openingDepth * std::min(baseImage.width(), baseImage.height());
 	std::cerr << "Otwieranie z głębią " << openingDepth << "..." << std::endl;
-	warkod::Image<warkod::ColorfulPixel> tempor(baseImage);
 
 	for(int i = 0; i < openingDepth; i++)
 	{
@@ -132,37 +172,49 @@ int main(int argc, char** argv)
 		blueImage.applyFilter(filter);
 		redImage.applyFilter(filter);
 	}
-	cv::imwrite(tmpDir + "blue_opened.png", blueImage.opencvImage());
-	cv::imwrite(tmpDir + "red_opened.png", redImage.opencvImage());
+	if(generatesDebug)
+	{
+		cv::imwrite(tmpDir + "blue_opened.png", blueImage.opencvImage());
+		cv::imwrite(tmpDir + "red_opened.png", redImage.opencvImage());
+		outputImage.addImage(blueImage, warkod::Color({0, 0, 0.15}));
+		outputImage.addImage(redImage, warkod::Color({0.15, 0, 0}));
+	}
+	//otwórz plik do zapisywania parametrów
+	std::ofstream featuresFile;
+	if(generatesDebug)
+	{
+		featuresFile = std::ofstream(tmpDir + "features.txt", std::ofstream::out);
+	}
 
-	outputImage.addImage(blueImage, warkod::Color({0, 0, 0.15}));
-	outputImage.addImage(redImage, warkod::Color({0.15, 0, 0}));
 	//wyciąganie obiektów z czerwonego obrazu
 	std::cerr << "Wyciąganie obrazów z czerwonego..." << std::endl;
 	bool found = true;
 	int objectCounter = 1;
 	//odległości i środki obiektów czerwonej strzałki
 	std::vector<centerDistance_t> redArrowDistances;
-	warkod::Image<warkod::BinaryPixel> bestRedArrowObject(baseImage.width(), baseImage.height());
 	while(found)
 	{
-		warkod::Image<warkod::BinaryPixel> redObject = redImage.findObject(found);
+		BinaryImage redObject = redImage.findObject(found);
 		if(found)
 		{
-			std::stringstream ss;
-			ss << tmpDir << "obj_" << std::setw(4) << std::setfill('0') << objectCounter << ".png";
+
 			std::cerr << "Wyciągnięto obiekt " << objectCounter << std::endl;
 			warkod::ObjectFeatures features = redObject.calculateInvariantMoments();
 			//wypisanie parametrów
-			std::cout << objectCounter << " ";
-			for(int i = 0; i < 10; i++)
+			if(generatesDebug)
 			{
-				std::cout << features.momentsArray[i] << " ";
+				featuresFile << objectCounter << " ";
+				for(int i = 0; i < 10; i++)
+				{
+					featuresFile << features.momentsArray[i] << " ";
+				}
+				featuresFile << features.objectFill;
+				featuresFile << std::endl;
+				
+				std::stringstream ss;
+				ss << tmpDir << "obj_" << std::setw(4) << std::setfill('0') << objectCounter << ".png";
+				cv::imwrite(ss.str(), redObject.opencvImage());
 			}
-			std::cout << features.objectFill;
-			std::cout << std::endl;
-			
-			cv::imwrite(ss.str(), redObject.opencvImage());
 			objectCounter++;
 			
 			if(features.objectFill > parameters.arrowParams.objectFill)
@@ -182,22 +234,25 @@ int main(int argc, char** argv)
 	std::vector<centerDistance_t> letterDDistances;
 	while(found)
 	{
-		warkod::Image<warkod::BinaryPixel> blueObject = blueImage.findObject(found);
+		BinaryImage blueObject = blueImage.findObject(found);
 		if(found)
 		{
-			std::stringstream ss;
-			ss << tmpDir << "obj_" << std::setw(4) << std::setfill('0') << objectCounter << ".png";
 			std::cerr << "Wyciągnięto obiekt " << objectCounter << std::endl;
 			warkod::ObjectFeatures features = blueObject.calculateInvariantMoments();
-			//wypisz cechy
-			std::cout << objectCounter << " ";
-			for(int i = 0; i < 10; i++)
+			if(generatesDebug)
 			{
-				std::cout << features.momentsArray[i] << " ";
+				//wypisz cechy
+				featuresFile << objectCounter << " ";
+				for(int i = 0; i < 10; i++)
+				{
+					featuresFile << features.momentsArray[i] << " ";
+				}
+				featuresFile << features.objectFill;
+				featuresFile << std::endl;
+				std::stringstream ss;
+				ss << tmpDir << "obj_" << std::setw(4) << std::setfill('0') << objectCounter << ".png";
+				cv::imwrite(ss.str(), blueObject.opencvImage());
 			}
-			std::cout << features.objectFill;
-			std::cout << std::endl;
-			cv::imwrite(ss.str(), blueObject.opencvImage());
 			objectCounter++;
 			
 			if(features.objectFill > parameters.arrowParams.objectFill)
@@ -223,7 +278,13 @@ int main(int argc, char** argv)
 			
 		}
 	}
+	if(generatesDebug)
+	{
+		featuresFile.close();
+	}
+	
 	//posortuj dopasowania
+	std::cerr << "Sortowanie dopasowań..." << std::endl;
 	struct 
 	{
 		//specjalna funkcja porównująca porównuje tylko dystans, a nie pozycje środków
@@ -239,40 +300,138 @@ int main(int argc, char** argv)
 	std::sort(letterDDistances.begin(), letterDDistances.end(), centerDistanceComparator);
 	
 	//zaznacz pierwsze dopasowania
-	outputImage.markCross(redArrowDistances[0].second, warkod::Color({0.4, 0, 0}), warkod::MarkCrossType::TrippleDotted, 20);
-	outputImage.markCross(blueArrowDistances[0].second, warkod::Color({0, 0, 0.4}), warkod::MarkCrossType::TrippleDotted, 20);
-	outputImage.markCross(letterWDistances[0].second, warkod::Color({0, 0.3, 0}), warkod::MarkCrossType::TrippleDotted, 20);
-	outputImage.markCross(letterKDistances[0].second, warkod::Color({0, 0.6, 0}), warkod::MarkCrossType::TrippleDotted, 20);
-	outputImage.markCross(letterDDistances[0].second, warkod::Color({0, 0.9, 0}), warkod::MarkCrossType::TrippleDotted, 20);
+	if(generatesDebug)
+	{
+		for(int i = 0; i < parameters.bestObjectsComparisonDepth; i++)
+		{
+			double radius = 30 - i * (25.0 / parameters.bestObjectsComparisonDepth);
+			outputImage.markCross(redArrowDistances[i].second, warkod::Color({0.4, 0, 0}), warkod::MarkCrossType::TrippleDotted, radius);
+			outputImage.markCross(blueArrowDistances[i].second, warkod::Color({0, 0, 0.4}), warkod::MarkCrossType::TrippleDotted, radius);
+			outputImage.markCross(letterWDistances[i].second, warkod::Color({0.2, 0.2, 0}), warkod::MarkCrossType::TrippleDotted, radius);
+			outputImage.markCross(letterKDistances[i].second, warkod::Color({0, 0.6, 0.6}), warkod::MarkCrossType::TrippleDotted, radius);
+			outputImage.markCross(letterDDistances[i].second, warkod::Color({0, 1, 0}), warkod::MarkCrossType::TrippleDotted, radius);
+		}
+	}
 	
-	//oblicz najbardziej prawdopodobną parę strzałki górnej i dolnej
-	//dla każdych kilku najlepszych dopasowań czerwonego, oblicz odległości do najlepszych dopasowań niebieskiego
-	//znajdź najmniejszą odległość
-	double bestArrowsDistance = std::numeric_limits<double>::max();
+	//znajdź taką konfigurację obiektów, która najbardziej odpowiada obiektom zawartym w logo
 	int bestRedArrowIndex = 0;
 	int bestBlueArrowIndex = 0;
-	for(int redIndex = 0; redIndex < parameters.bestObjectsComparisonDepth; redIndex++)
+	int bestLetterWIndex = 0;
+	int bestLetterKIndex = 0;
+	int bestLetterDIndex = 0;
+	// O(depth^5) juhuuu!!!
+	std::cerr << "Szukanie odpowiedniej konfiguracji pozycji obiektów..." << std::endl;
+	std::vector<centerDistance_t> configurationDistances;
+	for(bestRedArrowIndex = 0; bestRedArrowIndex < parameters.bestObjectsComparisonDepth; bestRedArrowIndex++)
 	{
-		for(int blueIndex = 0; blueIndex < parameters.bestObjectsComparisonDepth; blueIndex++)
+		for(bestBlueArrowIndex = 0; bestBlueArrowIndex < parameters.bestObjectsComparisonDepth; bestBlueArrowIndex++)
 		{
-			double distance = calculateDistance(redArrowDistances[redIndex].second, blueArrowDistances[blueIndex].second);
-			if(distance < bestArrowsDistance)
+			for(bestLetterWIndex = 0; bestLetterWIndex < parameters.bestObjectsComparisonDepth; bestLetterWIndex++)
 			{
-				bestArrowsDistance = distance;
-				bestRedArrowIndex = redIndex;
-				bestBlueArrowIndex = blueIndex;
+				for(bestLetterKIndex = 0; bestLetterKIndex < parameters.bestObjectsComparisonDepth; bestLetterKIndex++)
+				{
+					for(bestLetterDIndex = 0; bestLetterDIndex < parameters.bestObjectsComparisonDepth; bestLetterDIndex++)
+					{
+						//  R
+						//W K D
+						//  B
+						point_t r = redArrowDistances[bestRedArrowIndex].second;
+						point_t b = blueArrowDistances[bestBlueArrowIndex].second;
+						point_t w = letterWDistances[bestLetterWIndex].second;
+						point_t k = letterKDistances[bestLetterKIndex].second;
+						point_t d = letterDDistances[bestLetterDIndex].second;
+						double rb = calculateDistance(r, b);
+						double rk = calculateDistance(r, k);
+						double bk = calculateDistance(b, k);
+						double wd = calculateDistance(w, d);
+						double wk = calculateDistance(w, k);
+						double dk = calculateDistance(d, k);
+						double wr = calculateDistance(w, r);
+						double dr = calculateDistance(r, d);
+						double wb = calculateDistance(w, b);
+						double db = calculateDistance(b, d);
+						//jeśli jakieś odległości są bliskie zeru, to znaczy że trafiły nam się te same obiekty
+						const double minimalDistance = 5.0;
+						if(rb < minimalDistance || rk < minimalDistance || bk < minimalDistance || wd < minimalDistance || wk < minimalDistance || dk < minimalDistance || wr < minimalDistance || dr < minimalDistance || wb < minimalDistance || db < minimalDistance)
+						{
+							continue;
+						}
+						int points = 0;
+						//odległość
+						const double distanceGain = std::min(baseImage.width(), baseImage.height()) * parameters.distanceWeight;
+						points += distanceGain / (rk * (bestRedArrowIndex + bestLetterKIndex + 2) / 2.0);
+						points += distanceGain / (bk * (bestBlueArrowIndex + bestLetterKIndex + 2) / 2.0);
+						points += distanceGain / (rb * (bestRedArrowIndex + bestBlueArrowIndex + 2) / 2.0);
+						//krzyż
+						if(checkSoftEqual(rk + bk, rb, parameters.softComparisonParameter)) points++;
+						if(checkSoftEqual(wk + dk, wd, parameters.softComparisonParameter)) points++;
+						if(checkSoftEqual(rb, wd, parameters.softComparisonParameter)) points++;
+						//boki
+						if(checkSoftEqual(wr, db, parameters.softComparisonParameter)) points++;
+						if(checkSoftEqual(wb, dr, parameters.softComparisonParameter)) points++;
+						//środek
+						if(checkSoftEqual(rk, bk, parameters.softComparisonParameter)) points++;
+						if(checkSoftEqual(wk, dk, parameters.softComparisonParameter)) points++;
+						if(checkSoftEqual(wk, rk, parameters.softComparisonParameter)) points++;
+						if(checkSoftEqual(rk, dk, parameters.softComparisonParameter)) points++;
+						if(checkSoftEqual( dk, bk, parameters.softComparisonParameter)) points++;
+						if(checkSoftEqual(wk, bk, parameters.softComparisonParameter)) points++;
+						//deltoid
+						if(checkSoftEqual(wr + wb, dr + db, parameters.softComparisonParameter)) points++;
+						
+						//oblicz środek loga
+						point_t logoCenter((redArrowDistances[bestRedArrowIndex].second.first + blueArrowDistances[bestBlueArrowIndex].second.first) / 2, (redArrowDistances[bestRedArrowIndex].second.second + blueArrowDistances[bestBlueArrowIndex].second.second) / 2);
+						configurationDistances.push_back(centerDistance_t(points, logoCenter));
+					}
+				}
 			}
 		}
 	}
-	//zaznacz najlepsze dopasowania
-	outputImage.markCross(redArrowDistances[bestRedArrowIndex].second, warkod::Color({0.4, 0, 0}), warkod::MarkCrossType::Dotted, 40);
-	outputImage.markCross(blueArrowDistances[bestBlueArrowIndex].second, warkod::Color({0, 0, 0.4}), warkod::MarkCrossType::Dotted, 40);
 	
-	//oblicz środek loga
-	point_t logoCenter((redArrowDistances[bestRedArrowIndex].second.first + blueArrowDistances[bestBlueArrowIndex].second.first) / 2, (redArrowDistances[bestRedArrowIndex].second.second + blueArrowDistances[bestBlueArrowIndex].second.second) / 2);
+	std::sort(configurationDistances.begin(), configurationDistances.end(), centerDistanceComparator);
+	std::reverse(configurationDistances.begin(), configurationDistances.end());
+	std::cerr << "Najlepsza konfiguracja z punktacją " << configurationDistances[0].first << std::endl;
+	if(generatesDebug)
+	{
+		for(int i = 0; i < 5; i++)
+		{
+			outputImage.markCross(configurationDistances[i].second, warkod::Color({1,1,1}), warkod::MarkCrossType::Dotted, 50 - i * 8);
+		}
+	}
+	point_t logoCenter = configurationDistances[0].second;
+	
+// 	//sprawdź, czy aby może nie znalazł
+// 	if(!foundBestConfig)
+// 	{
+// 		std::cerr << "Nie znaleziono poprawnej konfiguracji pozycji!";
+// 		//ustawiamy na zero i niech się dzieje wola Nieba
+// 		bestRedArrowIndex = 0;
+// 		bestBlueArrowIndex = 0;
+// 		bestLetterWIndex = 0;
+// 		bestLetterKIndex = 0;
+// 		bestLetterDIndex = 0;
+// 	}
+	
+// 	//zaznacz najlepsze dopasowania
+// 	if(generatesDebug)
+// 	{
+// 		outputImage.markCross(redArrowDistances[bestRedArrowIndex].second, warkod::Color({0.4, 0, 0}), warkod::MarkCrossType::Dotted, 40);
+// 		outputImage.markCross(blueArrowDistances[bestBlueArrowIndex].second, warkod::Color({0, 0, 0.4}), warkod::MarkCrossType::Dotted, 40);
+// 		outputImage.markCross(letterWDistances[bestLetterWIndex].second, warkod::Color({0, 0.3, 0}), warkod::MarkCrossType::Dotted, 40);
+// 		outputImage.markCross(letterKDistances[bestLetterKIndex].second, warkod::Color({0, 0.6, 0}), warkod::MarkCrossType::Dotted, 40);
+// 		outputImage.markCross(letterDDistances[bestLetterDIndex].second, warkod::Color({0, 0.9, 0}), warkod::MarkCrossType::Dotted, 40);
+// 	}
+	
+	
 	//zaznacz
-	outputImage.markCross(logoCenter, warkod::Color({1, 1, 1}));
-	
-	cv::imwrite(tmpDir + "output.png", outputImage.opencvImage());
+	if(generatesDebug)
+	{
+		outputImage.markCross(logoCenter, warkod::Color({1, 1, 1}));
+		cv::imwrite(tmpDir + "output.png", outputImage.opencvImage());
+	}
+	ColorfulImage rawImage(cv::imread(imageFilename));
+	rawImage.markCross(logoCenter, warkod::Color({1,1,1}));
+	cv::imwrite(outputFilename, rawImage.opencvImage());
+	std::cout << "Wynik: " << logoCenter.first << " " << logoCenter.second << std::endl;
 	return(0);
 }

@@ -1,0 +1,72 @@
+#! /bin/bash
+
+get-double()
+{
+	local VALUE=$1
+	grep "$VALUE" $PARAMETERS_HEADER | grep -oP "[\d\.]+" | tr "." ","
+}
+
+add-macro()
+{
+	local MACRO_VALUE=$1
+	local MACRO_VAR=$2
+	echo "\\newcommand{\\$MACRO_VALUE}{$(get-double "$MACRO_VAR")}" >> $MACROS
+}
+
+PARAMETERS_HEADER=../src/parameters.hpp
+MACROS=macros.tex
+MEDIAN_RADIUS=$(grep "medianFilterRadius" $PARAMETERS_HEADER | grep -oP "\d+")
+MEDIAN_SIDE=$(($MEDIAN_RADIUS * 2 + 1))
+LIGHT_RED_RADIUS=$(get-double "lightRedRadius")
+
+echo "% makra automatycznie wygenerowane z projektu za pomocą generate-macros" > $MACROS
+
+echo "\\newcommand{\\medianfilterside}{$MEDIAN_SIDE}" >> $MACROS
+
+add-macro "darkredradius" "darkRedRadius"
+add-macro "lightredradius" "lightRedRadius"
+add-macro "darkredthreshold" "darkRedThreshold"
+
+add-macro "darkblueradius" "darkBlueRadius"
+add-macro "lightblueradius" "lightBlueRadius"
+add-macro "darkbluethreshold" "darkBlueThreshold"
+
+add-macro "openingdepth" "openingDepth"
+add-macro "bestobjectscomparisondepth" "bestObjectsComparisonDepth"
+
+# Tabelka niezmienników
+# Dodaj nagłówek tabeli
+echo "\\newcommand{\\invarianttable}{" >> $MACROS
+echo "\\begin{tabular}{l | c c c c c c c c }" >> $MACROS
+echo "Obiekt & M4 & M7 & M8 & M9 \\\\" >> $MACROS
+echo "\\hline" >> $MACROS
+
+# Dodaj wiersz tabeli
+print-row()
+{
+	local VARIABLE=$1
+	local TITLE1="$2"
+	local TITLE2="$3"
+	INITIALIZERS=$(grep "$VARIABLE" $PARAMETERS_HEADER | grep -oP "\{ [\d\,\s\.\-e]+}")
+	INVARIANTS=($(echo $INITIALIZERS | grep -oP "[\d\.\-e]+"))
+	echo -n "$TITLE1 " >> $MACROS
+	for I in 3 5 7 8
+	do
+		echo -n "& ${INVARIANTS[$I]} " >> $MACROS
+	done
+	echo "\\\\" >> $MACROS
+	echo -n "$TITLE2 " >> $MACROS
+	for I in 13 15 17 18
+	do
+		echo -n "& ${INVARIANTS[$I]} " >> $MACROS
+	done
+	echo "\\\\" >> $MACROS
+	echo "\\hline" >> $MACROS
+}
+
+print-row "arrowParams" "Strzałka" "Wagi"
+print-row "letterWParams" "Litera W" "Wagi"
+print-row "letterKParams" "Litera K" "Wagi"
+print-row "letterDParams" "Litera D" "Wagi"
+
+echo "\\end{tabular}}" >> $MACROS
