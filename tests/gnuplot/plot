@@ -1,0 +1,19 @@
+#col1 = 6
+#col2 = 10
+#maintitle = "Title"
+
+#set size ratio -1
+set terminal svg
+set title maintitle
+#set logscale xy
+set key off
+set multiplot
+
+set yrange [] writeback
+set xrange [] writeback
+plot 'selected1' using col1:col2:1 with labels point pointtype 0 linetype rgb "red" offset char 0.5,0 textcolor rgb "red"  title "Selected 1", \
+'selected2' using col1:col2:1 with labels point  pointtype 0 linetype rgb "blue" offset char 0.5,0 textcolor rgb "blue" title "Selected 2"
+set yrange restore
+set xrange restore
+replot 'output1' using col1:col2 with points pointtype 0 linetype 4 title "Output 1", \
+'output2' using col1:col2 with points pointtype 0 linetype 4 title "Output 2";

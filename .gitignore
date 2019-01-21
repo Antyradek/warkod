@@ -1,6 +1,7 @@
 *.kdev4
-img/
-tests/
+img/all/
+tests/results/
+tests/build/
 *.dvi
 *.log
 *.aux

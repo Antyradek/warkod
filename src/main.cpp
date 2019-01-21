@@ -24,6 +24,18 @@ typedef warkod::Image<warkod::ColorfulPixel> ColorfulImage;
 /// Binarny obraz
 typedef warkod::Image<warkod::BinaryPixel> BinaryImage;
 
+/// Wczytaj obraz za pomocą OpenCV
+cv::Mat readImage(const std::string& filename)
+{
+	return(cv::imread(filename));
+}
+
+/// Zapisz obraz za pomocą OpenCV
+void writeImage(const std::string& filename, const cv::Mat& opencvImage)
+{
+	cv::imwrite(filename, opencvImage);
+}
+
 /// Oblicz odległość ważoną obiektu o określonych niezmiennikach od podanego wzoru
 double calculateWeightedDistance(const warkod::ObjectFeatures& invariantMoments, const warkod::ObjectParameters& parameters)
 {
@@ -62,6 +74,7 @@ bool checkSoftEqual(double first, double second, double softness)
 	return(shorter + maxDiff > longer);
 }
 
+/// Main programu
 int main(int argc, char** argv)
 {
 	if(argc != 3 && argc != 4)
@@ -87,21 +100,22 @@ int main(int argc, char** argv)
 	
 	//wczytanie obrazu
 	std::cerr << "Wczytywanie " << imageFilename << "... " << std::endl;
-	ColorfulImage baseImage(cv::imread(imageFilename));
+	ColorfulImage baseImage(readImage(imageFilename));
 	if(generatesDebug)
 	{
-		cv::imwrite(tmpDir + "raw.jpg", baseImage.opencvImage());
+		writeImage(tmpDir + "raw.jpg", baseImage.opencvImage());
 	}
 	ColorfulImage outputImage(baseImage.width(), baseImage.height());
 
 	
 	//zastosowanie filtra medianowego
-	std::cerr << "Filtr medianowy..." << std::endl;
-	const warkod::MedianFilter medianFilter(parameters.medianFilterRadius);
+	int medianFilterRadius = parameters.medianFilterRadius * std::min(baseImage.width(), baseImage.height());
+	std::cerr << "Filtrowanie medianowe filtrem o boku " << 2 * medianFilterRadius + 1 << "..." << std::endl;
+	const warkod::MedianFilter medianFilter(medianFilterRadius);
 	baseImage.applyFilter(medianFilter);
 	if(generatesDebug)
 	{
-		cv::imwrite(tmpDir + "median.jpg", baseImage.opencvImage());
+		writeImage(tmpDir + "median.jpg", baseImage.opencvImage());
 	}
 
 	//oddzielenie czerwonego
@@ -127,7 +141,7 @@ int main(int argc, char** argv)
 	}
 	if(generatesDebug)
 	{
-		cv::imwrite(tmpDir + "red.png", redImage.opencvImage());
+		writeImage(tmpDir + "red.png", redImage.opencvImage());
 	}
 	
 	//oddzielenie niebieskiego
@@ -153,7 +167,7 @@ int main(int argc, char** argv)
 	}
 	if(generatesDebug)
 	{
-		cv::imwrite(tmpDir + "blue.png", blueImage.opencvImage());
+		writeImage(tmpDir + "blue.png", blueImage.opencvImage());
 	}
 	
 	//otwieranie
@@ -174,8 +188,8 @@ int main(int argc, char** argv)
 	}
 	if(generatesDebug)
 	{
-		cv::imwrite(tmpDir + "blue_opened.png", blueImage.opencvImage());
-		cv::imwrite(tmpDir + "red_opened.png", redImage.opencvImage());
+		writeImage(tmpDir + "blue_opened.png", blueImage.opencvImage());
+		writeImage(tmpDir + "red_opened.png", redImage.opencvImage());
 		outputImage.addImage(blueImage, warkod::Color({0, 0, 0.15}));
 		outputImage.addImage(redImage, warkod::Color({0.15, 0, 0}));
 	}
@@ -213,7 +227,7 @@ int main(int argc, char** argv)
 				
 				std::stringstream ss;
 				ss << tmpDir << "obj_" << std::setw(4) << std::setfill('0') << objectCounter << ".png";
-				cv::imwrite(ss.str(), redObject.opencvImage());
+				writeImage(ss.str(), redObject.opencvImage());
 			}
 			objectCounter++;
 			
@@ -251,7 +265,7 @@ int main(int argc, char** argv)
 				featuresFile << std::endl;
 				std::stringstream ss;
 				ss << tmpDir << "obj_" << std::setw(4) << std::setfill('0') << objectCounter << ".png";
-				cv::imwrite(ss.str(), blueObject.opencvImage());
+				writeImage(ss.str(), blueObject.opencvImage());
 			}
 			objectCounter++;
 			
@@ -302,44 +316,49 @@ int main(int argc, char** argv)
 	//zaznacz pierwsze dopasowania
 	if(generatesDebug)
 	{
-		for(int i = 0; i < parameters.bestObjectsComparisonDepth; i++)
+		for(size_t i = 0; i < static_cast<size_t>(parameters.bestObjectsComparisonDepth); i++)
 		{
 			double radius = 30 - i * (25.0 / parameters.bestObjectsComparisonDepth);
-			outputImage.markCross(redArrowDistances[i].second, warkod::Color({0.4, 0, 0}), warkod::MarkCrossType::TrippleDotted, radius);
-			outputImage.markCross(blueArrowDistances[i].second, warkod::Color({0, 0, 0.4}), warkod::MarkCrossType::TrippleDotted, radius);
-			outputImage.markCross(letterWDistances[i].second, warkod::Color({0.2, 0.2, 0}), warkod::MarkCrossType::TrippleDotted, radius);
-			outputImage.markCross(letterKDistances[i].second, warkod::Color({0, 0.6, 0.6}), warkod::MarkCrossType::TrippleDotted, radius);
-			outputImage.markCross(letterDDistances[i].second, warkod::Color({0, 1, 0}), warkod::MarkCrossType::TrippleDotted, radius);
+			if(i < redArrowDistances.size())
+				outputImage.markCross(redArrowDistances.at(i).second, warkod::Color({0.6, 0, 0}), warkod::MarkCrossType::TrippleDotted, radius + 5);
+			if(i < blueArrowDistances.size())
+				outputImage.markCross(blueArrowDistances.at(i).second, warkod::Color({0, 0, 0.6}), warkod::MarkCrossType::TrippleDotted, radius + 5);
+			if(i < letterWDistances.size())
+				outputImage.markCross(letterWDistances.at(i).second, warkod::Color({0.2, 0.2, 0}), warkod::MarkCrossType::TrippleDotted, radius);
+			if(i < letterKDistances.size())
+				outputImage.markCross(letterKDistances.at(i).second, warkod::Color({0, 0.6, 0.6}), warkod::MarkCrossType::TrippleDotted, radius);
+			if(i < letterDDistances.size())
+				outputImage.markCross(letterDDistances.at(i).second, warkod::Color({0, 1, 0}), warkod::MarkCrossType::TrippleDotted, radius);
 		}
 	}
 	
 	//znajdź taką konfigurację obiektów, która najbardziej odpowiada obiektom zawartym w logo
-	int bestRedArrowIndex = 0;
-	int bestBlueArrowIndex = 0;
-	int bestLetterWIndex = 0;
-	int bestLetterKIndex = 0;
-	int bestLetterDIndex = 0;
+	size_t bestRedArrowIndex = 0;
+	size_t bestBlueArrowIndex = 0;
+	size_t bestLetterWIndex = 0;
+	size_t bestLetterKIndex = 0;
+	size_t bestLetterDIndex = 0;
 	// O(depth^5) juhuuu!!!
 	std::cerr << "Szukanie odpowiedniej konfiguracji pozycji obiektów..." << std::endl;
 	std::vector<centerDistance_t> configurationDistances;
-	for(bestRedArrowIndex = 0; bestRedArrowIndex < parameters.bestObjectsComparisonDepth; bestRedArrowIndex++)
+	for(bestRedArrowIndex = 0; bestRedArrowIndex < parameters.bestObjectsComparisonDepth && bestRedArrowIndex < redArrowDistances.size(); bestRedArrowIndex++)
 	{
-		for(bestBlueArrowIndex = 0; bestBlueArrowIndex < parameters.bestObjectsComparisonDepth; bestBlueArrowIndex++)
+		for(bestBlueArrowIndex = 0; bestBlueArrowIndex < parameters.bestObjectsComparisonDepth && bestBlueArrowIndex < blueArrowDistances.size(); bestBlueArrowIndex++)
 		{
-			for(bestLetterWIndex = 0; bestLetterWIndex < parameters.bestObjectsComparisonDepth; bestLetterWIndex++)
+			for(bestLetterWIndex = 0; bestLetterWIndex < parameters.bestObjectsComparisonDepth && bestLetterWIndex < letterWDistances.size(); bestLetterWIndex++)
 			{
-				for(bestLetterKIndex = 0; bestLetterKIndex < parameters.bestObjectsComparisonDepth; bestLetterKIndex++)
+				for(bestLetterKIndex = 0; bestLetterKIndex < parameters.bestObjectsComparisonDepth && bestLetterKIndex < letterKDistances.size(); bestLetterKIndex++)
 				{
-					for(bestLetterDIndex = 0; bestLetterDIndex < parameters.bestObjectsComparisonDepth; bestLetterDIndex++)
+					for(bestLetterDIndex = 0; bestLetterDIndex < parameters.bestObjectsComparisonDepth && bestLetterDIndex < letterDDistances.size(); bestLetterDIndex++)
 					{
 						//  R
 						//W K D
 						//  B
-						point_t r = redArrowDistances[bestRedArrowIndex].second;
-						point_t b = blueArrowDistances[bestBlueArrowIndex].second;
-						point_t w = letterWDistances[bestLetterWIndex].second;
-						point_t k = letterKDistances[bestLetterKIndex].second;
-						point_t d = letterDDistances[bestLetterDIndex].second;
+						point_t r = redArrowDistances.at(bestRedArrowIndex).second;
+						point_t b = blueArrowDistances.at(bestBlueArrowIndex).second;
+						point_t w = letterWDistances.at(bestLetterWIndex).second;
+						point_t k = letterKDistances.at(bestLetterKIndex).second;
+						point_t d = letterDDistances.at(bestLetterDIndex).second;
 						double rb = calculateDistance(r, b);
 						double rk = calculateDistance(r, k);
 						double bk = calculateDistance(b, k);
@@ -351,7 +370,7 @@ int main(int argc, char** argv)
 						double wb = calculateDistance(w, b);
 						double db = calculateDistance(b, d);
 						//jeśli jakieś odległości są bliskie zeru, to znaczy że trafiły nam się te same obiekty
-						const double minimalDistance = 5.0;
+						const double minimalDistance = 1.0;
 						if(rb < minimalDistance || rk < minimalDistance || bk < minimalDistance || wd < minimalDistance || wk < minimalDistance || dk < minimalDistance || wr < minimalDistance || dr < minimalDistance || wb < minimalDistance || db < minimalDistance)
 						{
 							continue;
@@ -359,9 +378,9 @@ int main(int argc, char** argv)
 						int points = 0;
 						//odległość
 						const double distanceGain = std::min(baseImage.width(), baseImage.height()) * parameters.distanceWeight;
-						points += distanceGain / (rk * (bestRedArrowIndex + bestLetterKIndex + 2) / 2.0);
-						points += distanceGain / (bk * (bestBlueArrowIndex + bestLetterKIndex + 2) / 2.0);
-						points += distanceGain / (rb * (bestRedArrowIndex + bestBlueArrowIndex + 2) / 2.0);
+						points += distanceGain / (rk * (bestRedArrowIndex + bestLetterKIndex + 2) * parameters.indexPenality / 2.0);
+						points += distanceGain / (bk * (bestBlueArrowIndex + bestLetterKIndex + 2) * parameters.indexPenality / 2.0);
+						points += distanceGain / (rb * (bestRedArrowIndex + bestBlueArrowIndex + 2) * parameters.indexPenality / 2.0);
 						//krzyż
 						if(checkSoftEqual(rk + bk, rb, parameters.softComparisonParameter)) points++;
 						if(checkSoftEqual(wk + dk, wd, parameters.softComparisonParameter)) points++;
@@ -380,7 +399,7 @@ int main(int argc, char** argv)
 						if(checkSoftEqual(wr + wb, dr + db, parameters.softComparisonParameter)) points++;
 						
 						//oblicz środek loga
-						point_t logoCenter((redArrowDistances[bestRedArrowIndex].second.first + blueArrowDistances[bestBlueArrowIndex].second.first) / 2, (redArrowDistances[bestRedArrowIndex].second.second + blueArrowDistances[bestBlueArrowIndex].second.second) / 2);
+						point_t logoCenter((redArrowDistances.at(bestRedArrowIndex).second.first + blueArrowDistances.at(bestBlueArrowIndex).second.first) / 2, (redArrowDistances.at(bestRedArrowIndex).second.second + blueArrowDistances.at(bestBlueArrowIndex).second.second) / 2);
 						configurationDistances.push_back(centerDistance_t(points, logoCenter));
 					}
 				}
@@ -390,48 +409,33 @@ int main(int argc, char** argv)
 	
 	std::sort(configurationDistances.begin(), configurationDistances.end(), centerDistanceComparator);
 	std::reverse(configurationDistances.begin(), configurationDistances.end());
-	std::cerr << "Najlepsza konfiguracja z punktacją " << configurationDistances[0].first << std::endl;
+	if(configurationDistances.size() == 0)
+	{
+		//tak się może zdarzyć, jeśli wszystkie obiekty są za małe, czy coś
+		std::cerr << "Nie znaleziono loga!" << std::endl;
+		writeImage(tmpDir + "output.png", outputImage.opencvImage());
+		return(-1);
+	}
+	
+	std::cerr << "Najlepsza konfiguracja z punktacją " << configurationDistances.at(0).first << std::endl;
 	if(generatesDebug)
 	{
 		for(int i = 0; i < 5; i++)
 		{
-			outputImage.markCross(configurationDistances[i].second, warkod::Color({1,1,1}), warkod::MarkCrossType::Dotted, 50 - i * 8);
+			outputImage.markCross(configurationDistances.at(i).second, warkod::Color({1,1,1}), warkod::MarkCrossType::Dotted, 50 - i * 8);
 		}
 	}
-	point_t logoCenter = configurationDistances[0].second;
-	
-// 	//sprawdź, czy aby może nie znalazł
-// 	if(!foundBestConfig)
-// 	{
-// 		std::cerr << "Nie znaleziono poprawnej konfiguracji pozycji!";
-// 		//ustawiamy na zero i niech się dzieje wola Nieba
-// 		bestRedArrowIndex = 0;
-// 		bestBlueArrowIndex = 0;
-// 		bestLetterWIndex = 0;
-// 		bestLetterKIndex = 0;
-// 		bestLetterDIndex = 0;
-// 	}
-	
-// 	//zaznacz najlepsze dopasowania
-// 	if(generatesDebug)
-// 	{
-// 		outputImage.markCross(redArrowDistances[bestRedArrowIndex].second, warkod::Color({0.4, 0, 0}), warkod::MarkCrossType::Dotted, 40);
-// 		outputImage.markCross(blueArrowDistances[bestBlueArrowIndex].second, warkod::Color({0, 0, 0.4}), warkod::MarkCrossType::Dotted, 40);
-// 		outputImage.markCross(letterWDistances[bestLetterWIndex].second, warkod::Color({0, 0.3, 0}), warkod::MarkCrossType::Dotted, 40);
-// 		outputImage.markCross(letterKDistances[bestLetterKIndex].second, warkod::Color({0, 0.6, 0}), warkod::MarkCrossType::Dotted, 40);
-// 		outputImage.markCross(letterDDistances[bestLetterDIndex].second, warkod::Color({0, 0.9, 0}), warkod::MarkCrossType::Dotted, 40);
-// 	}
-	
+	point_t logoCenter = configurationDistances.at(0).second;
 	
 	//zaznacz
 	if(generatesDebug)
 	{
 		outputImage.markCross(logoCenter, warkod::Color({1, 1, 1}));
-		cv::imwrite(tmpDir + "output.png", outputImage.opencvImage());
+		writeImage(tmpDir + "output.png", outputImage.opencvImage());
 	}
-	ColorfulImage rawImage(cv::imread(imageFilename));
+	ColorfulImage rawImage(readImage(imageFilename));
 	rawImage.markCross(logoCenter, warkod::Color({1,1,1}));
-	cv::imwrite(outputFilename, rawImage.opencvImage());
+	writeImage(outputFilename, rawImage.opencvImage());
 	std::cout << "Wynik: " << logoCenter.first << " " << logoCenter.second << std::endl;
 	return(0);
 }

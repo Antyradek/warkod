@@ -1,0 +1,30 @@
+#! /bin/bash
+WARKOD=build/src/warkod
+IMAGES=$(ls ../img/img*.jpg)
+RESULTS=results
+
+rm -rf $RESULTS
+mkdir $RESULTS
+
+trap "killall warkod" SIGINT
+
+PIDS=
+for IMAGE in $IMAGES
+do
+	BASENAME=$(basename $IMAGE)
+	TMPDIR=$RESULTS/$BASENAME.dir
+	mkdir $TMPDIR
+	RESULT=$RESULTS/$BASENAME
+	$WARKOD $IMAGE $RESULT $TMPDIR &
+	OUTPUT=$PWD/$TMPDIR/output.png
+	ln -s $OUTPUT $RESULTS/debug_$BASENAME
+	PIDS+="$! "
+done
+
+for PID in $PIDS
+do
+	wait $PID
+done
+
+
+

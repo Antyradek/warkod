@@ -9,6 +9,7 @@
 \usepackage{float}
 \usepackage{graphicx}
 \usepackage{subcaption}
+\usepackage{fullpage}
 \input{macros.tex}
 \begin{document}
 	\title{Warkod --- Wykrywanie loga Warszawskich Kolei Dojazdowych na zdjęciach}
@@ -42,19 +43,27 @@
 			Przykładowe uruchomienie:
 			\texttt{./warkod zdjęcie.jpg zaznaczone.jpg /tmp}
 			
+		\subsection{Spodziewany wynik}
+			Program powinien wygenerować obraz wejściowy z zaznaczonym środkiem loga WKD.
+			Pozycja, rozmiar i obrót, a także małe zmiany perspektywy nie powinny wpływać na odpowiedź.
+			
+			Zakłada się minimalną wielkość obiektu w stosunku do rozmiarów zdjęcia.
+			Oświetlenie i materiał, na którym wydrukowane jest logo, mogą wpływać na wykrywanie kolorów.
+			
 	\section{Działanie}
 		Program wykonuje szereg osobnych operacji.
 		Wszystkie parametry kolorów zakładają, że piksel ma zakres jasności od $0,0$ do $1,0$.
 		\subsection{Filtracja}
-			Obraz filtrowany jest filtrem medianowym o określonej wielkości.
-			Filtr jest kwadratowy o boku \medianfilterside{} pikseli. 
-			Przy krawędziach zmniejsza ilość porównywanych pikseli i wybiera medianę z mniejszej ilości.
+			Obraz filtrowany jest filtrem medianowym o określonej wielkości, zależnej od wielkości obrazu.
+			Filtr jest kwadratowy, o promieniu (ilości pikseli w linii od środkowego), który wynika z pomnożenia przez \medianfilterradius{} długość mniejszego boku obrazu.
+			Zwykle jest to 1 lub 2.
+			Przy krawędziach program nie bierze pod uwagę obszaru poza obrazem, zmniejsza ilość porównywanych pikseli, wybiera medianę z mniejszej ilości.
 			
 			Filtracja jest zaimplementowana wielowątkowo, po jednym wątku na wiersz.
 			
 		\subsection{Oddzielanie kolorów}
 			Zastosowana została metoda porównywania geometrycznego punktów. 
-			Ponieważ piksel może być zaprezentowany jako punkt we wnętrzu sześcianu, gdzie na osiach odłożone są składowe kolory czerwony, zielony i niebieski,
+			Ponieważ piksel może być zaprezentowany jako punkt we wnętrzu sześcianu o boku 1, gdzie na osiach odłożone są składowe kolory czerwony, zielony i niebieski,
 			można zastosować proste porównania.
 			
 			Wykryć należy piksele odpowiednio czerwone i niebieskie, gdyż logo składa się z takich kolorów.
@@ -93,12 +102,12 @@
 			
 		\subsection{Znajdywanie obiektów}
 			Najdroższa obliczeniowo część przetwarzania.
-			Należy podzielić obiekt binarny na wiele spójnych podobiektów i obliczyć charakterystyki dla każdego z nich.
+			Należy podzielić obraz binarny na wiele spójnych podobiektów i obliczyć charakterystyki dla każdego z nich.
 			
 			Odbywa się to w pętli.
 			Program tworzy nowy obraz, na którym zaznacza odwiedzone piksele.
-			Za każdym razem program szuka pierwszego zapalonego piksela, idąc wierszami od lewego-górnego rogu.[]
-			Po znalezieniu takiego, zaczyna rozlewać, zapamiętuje znaleziony piksel w kolejce i przechodzi do głównej pętli rozlewania.
+			Za każdym razem program szuka pierwszego zapalonego piksela, idąc wierszami od lewego-górnego rogu.
+			Po znalezieniu takiego, zaczyna rozlewać, zapamiętuje znaleziony piksel w kolejce i przechodzi do głównej pętli rozlewania:
 			\begin{enumerate}
 				\item Pobranie następnego piksela z kolejki.
 				\item Sprawdzenie, czy któryś z sąsiadów nie jest zapalony.
@@ -117,13 +126,13 @@
 			\begin{itemize}
 				\item Pełen zestaw niezmienników od $M1$ do $M10$.
 				\item Środek geometryczny obiektu.
-				\item Wypełnienie ekranu, czyli ilość pikseli obiektu podzielona przez ilość pikseli obrazu.
+				\item Wypełnienie ekranu (wielkość), czyli ilość pikseli obiektu podzielona przez ilość pikseli obrazu.
 			\end{itemize}
 			
 			Dzieje się to w jednym przelocie po wszystkich pikselach, więc zrównoleglenie tej operacji nie daje dużych przyspieszeń.
 			
 			Następnie dla każdego obiektu obliczana jest \emph{odległość ważona} w 10-wymiarowej przestrzeni od punktów idealnych obiektów.
-			Wagi łączą w sobie przydatność niezmiennika przy identyfikowaniu obiektu oraz zerują nieprzydatne niezmienniki.
+			Wagi łączą w sobie przydatność niezmiennika przy identyfikowaniu obiektu, odchylenie standardowe cech uczących obiektów, oraz zerują nieprzydatne niezmienniki.
 			Wielkość obiektu także jest brana pod uwagę, za małe obiekty są odrzucane.
 			
 			Początkowe wartości niezmienników zostały wyznaczone przez program, następnie zmodyfikowane ręcznie w celu uzyskania najlepszych rezultatów.
@@ -135,7 +144,7 @@
 			\end{center}
 
 		\subsection{Sortowanie}
-			Odległości ważone są sortowane dla każdego obiektu.
+			Odległości ważone są sortowane rosnąco dla zbioru odległości dla każdego obiektu.
 			Na obrazku roboczym zaznaczane są obiekty o najlepszym dopasowaniu.
 			
 			Jednak ze względu na różne obrazy, nie zawsze najbardziej dopasowane obiekty muszą być tymi prawidłowymi.
@@ -144,15 +153,25 @@
 			
 		\subsection{Szukanie konfiguracji}
 			Przeszukując pierwsze \bestobjectscomparisondepth{} najlepszych dopasowań, program liczy odległości pomiędzy obiektami i szuka takiej konfiguracji, że spełnia ona pozycje obiektów w logo.
-			Jest to kosztowna operacja, im głębiej decydujemy się przeszukiwać listy obiektów.
-			Następnie liczony jest środek loga i zaznaczany na wynikowym obrazie.
+			Jest to tym kosztowniejsza operacja, im głębiej decydujemy się przeszukiwać listy obiektów.
+			Następnie liczony jest środek loga i zapisywany w buforze razem z punktacją konfiguracji.
 			Znalezione dopasowania są sortowane względem liczby punktów, jakie zyskują za spełnianie podobieństw odcinków.
 			
 			Najlepsze dopasowanie jest ustawiane na wyjście.
 			
+			Zauważono, że promowanie bliskości obiektów, daje najlepsze rezultaty. Algorytm przydziela odwrotnie proporcjonalną ilość punktów do odległości pomiędzy strzałkami i pomiędzy strzałkami, a literą K.
+			
+			Zwiększanie głębokości przeszukiwania pozwala wykryć kilka logów, ale także zwiększa prawdopodobieństwo znalezienia nieprawidłowego loga.
+			
+			Algorytm jest odporny na przypadek niewykrycia jednej ze składowych, każde porównanie porównuje odległości z daną składową identyczną ilość razy.
+			To powinno zwiększać wykrywanie loga, jeśli będą problemy z dopasowywaniem cech obiektów we wcześniejszych krokach.
+			
 	\section{Wyniki}
-		Wynikowe obrazy dla prostego przykładu.
-		\begin{figure}[h!]
+		W ogólnym przypadku program zawsze zwróci wynik. Nawet, jeśli na obrazie nie ma loga WKD. 
+		Zwyczajnie znajdzie najlepsze dopasowanie do najlepszych obiektów.
+		Może nie zwrócić wyniku, jeśli na przykład żaden obiekt nie będzie spełniał wymogów minimalnej wielkości, w szczególności strzałki.
+
+		\begin{figure}[h]
 			\centering
 				\begin{subfigure}[b]{0.45\linewidth}
 					\includegraphics[width=\linewidth]{raw.jpg}
@@ -167,12 +186,11 @@
 		
 		Na prawym obrazku są zaznaczone obiekty, wyznaczone w trakcie pracy.
 		Małymi, przerywanymi okręgami zaznaczono wstępne dopasowania poszczególnych obiektów.
+		Im większy okrąg, tym lepsze dopasowanie.
 		Odcienie zielonego oznaczają kolejne litery.
 		
-		Większymi okręgami zaznaczono obiekty znalezione po szukaniu konfiguracji, porównując odległości obiektów.
-		Jak widać w tym przypadku pierwsze dopasowanie było od razu najlepsze.
-		
-		Białym krzyżem zaznaczono środek, czyli punkt między czerwoną, a niebieską strzałką.
+		Białym krzyżem zaznaczono środek, czyli punkt między czerwoną, a niebieską strzałką w najlepszym dopasowaniu.
+		Przerywanymi białymi krzyżykami oznaczono najlepsze kolejne dopasowania logów. Przy dostatecznie dużej głębokości porównywania i dobrym algorytmie szukania konfiguracji, będą to kolejne znalezione na obrazie loga.
 		
 	\section{Możliwości rozwoju}
 		Ponieważ program jest napisany obiektowo, z dużą ilością abstrakcji, możliwa jest implementacja innego algorytmu w oparciu o istniejące klasy.
@@ -180,9 +198,17 @@
 		Można zrównoleglić poszukiwanie obiektów do dwóch wątków, co na wielordzeniowym komputerze przyspieszy działanie.
 		Takich mniejszych akcji, jak sortowanie, nie trzeba przyspieszać, gdyż i tak dzieją się wystarczająco szybko, w porównaniu z innymi obliczeniami.
 		
-		Wykrywanie kilku logów na raz jest możliwe do dodania. Wystarczy, że na etapie szukania konfiguracji, program będzie potrafił zaakceptować kilka znalezisk.
-		Do tego jest wymagane pogłębienie szukania wśród obiektów, co znacznie zwiększy ilość obliczeń.
+		Wykrywanie kilku logów na raz jest możliwe do dodania.
+		Do tego jest wymagane pogłębienie szukania wśród obiektów, co jednak może wprowadzić więcej nieprawidłowych dopasowań.
+		Potrzebny jest sposób oceny granicy między prawidłowymi znaleziskami pasujących konfiguracji, a fałszywymi.
+		
+		Przede wszystkim, program powinien posiadać lepszy algorytm ustalania konfiguracji obiektów.
+		Można brać pod uwagę nie tylko pozycje znalezionych obiektów, ale także ich wzajemne wielkości.
+		Należy na tej podstawie wykryć nieprawidłowe dopasowania liter jako niebieskiej strzałki.
+		Trzeba jednak wciąż mieć na uwadze odporność algorytmu na brakujące składowe.
+		Stworzenie takiego algorytmu jest czasochłonne, gdyż ciężko przewidzieć rezultaty.
 		
 		Aby ulepszyć jakość wykrywania, warto by użyć jakiegoś zaawansowanego systemu do obliczania parametrów programu.
+		Przy ręcznym wskazywaniu obiektów do obliczeń cech, każda bardziej znacząca zmiana algorytmu może powodować różne wyznaczenie kolejnych obiektów i potrzebę zaktualizowania numerów obiektów.
 		
 \end{document}

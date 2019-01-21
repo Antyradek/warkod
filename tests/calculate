@@ -1,0 +1,99 @@
+#! /bin/bash
+set -e
+# Oblicza wartości niezmienników z podanych niżej obiektów
+
+append()
+{
+RED_ARROW+=$1
+BLUE_ARROW+=$2
+LETTER_W+=$3
+LETTER_K+=$4
+LETTER_D+=$5
+}
+
+# Ilość treningowych obrazów
+IMAGES=2
+RED_ARROW=()
+BLUE_ARROW=()
+LETTER_W=()
+LETTER_K=()
+LETTER_D=()
+# img01_mini.jpg
+append 45 
+
+# Dla każdego z typów obrazów wpisz do tablicy identyfikatory obiektów w liczbie $IMAGES
+# RED_ARROW=(0058 0067 0030 0006)
+# BLUE_ARROW=(0212 0313 0139 0126)
+# LETTER_W=(0209 0303 0138 0122)
+# LETTER_K=(0210 0305 0137 0120)
+# LETTER_D=(0211 0308 0135 0117)
+# Obraz 4
+# RED_ARROW=(0006 0001)
+# BLUE_ARROW=(0126 0161)
+# LETTER_W=(0122 0154)
+# LETTER_K=(0120 0158)
+# LETTER_D=(0117 0160)
+RED_ARROW=(0006 0012)
+BLUE_ARROW=(0126 0052)
+LETTER_W=(0122 0154)
+LETTER_K=(0120 0158)
+LETTER_D=(0117 0160)
+
+RESULTS_DIR=results
+RESULTS=($(ls $RESULTS_DIR))
+OUTPUT=output
+VARIABLES=(redArrowParams blueArrowParams letterWParams letterKParams letterDParams)
+WEIGHTS=("0,0,1,1,1,1,1,1,1,1" "0,0,1,1,1,1,1,1,1,1" "0,0,0,0,0,1,0,0,1,0" "0,0,0,1,0,0,0,1,1,0" "0,0,0,0,0,0,0,1,1,0")
+
+COUNTER=0
+for OBJECT in $RED_ARROW $BLUE_ARROW $LETTER_W $LETTER_K $LETTER_D
+do
+	# Lista niezmienników
+	INVARIANT_TEXT=""
+	# Lista sigm
+	SIGMA_TEXT=""
+	for INVARIANT in "1 2 3 4 5 6 7 8 9 10"
+	do
+		# Suma niezmienników ze wszystkich rekordów
+		INVARIANT_SUM=0
+		# Sumy do obliczenia sigmy
+		SUM1=0
+		SUM2=0
+		# Wartości
+		VALUES=()
+		for ((I = 0; I < $IMAGES; I++))
+		do
+			RESULT=${RESULTS[$I]}
+			OUTPUT_FILE=$RESULTS_DIR/$RESULT/$OUTPUT
+			# Znajdź wiersz z wypisanym niezmiennikiem
+			OBJECT_INVARIANTS=($(grep "^${OBJECT[$I]}" $OUTPUT_FILE))
+			# Przerób na format zrozumiały dla bc
+			FIXED_VALUE=$(sed -E "s/([+-]?[0-9.]+)[eE]\+?(-?)([0-9]+)/(\1*10^\2\3)/g" <<< "${OBJECT_INVARIANTS[$INVARIANT]}")
+			VALUES[$I]="$FIXED_VALUE"
+			# Dodaj do sumy
+			INVARIANT_SUM=$(echo "$INVARIANT_SUM + ($FIXED_VALUE)" | bc -l)
+			
+			# Dodaj do sum do obliczania sigmy
+			SUM1=$(echo "$SUM1 + $FIXED_VALUE * $FIXED_VALUE" | bc -l)
+			SUM2=$(echo "$SUM2 + $FIXED_VALUE" | bc -l)
+		done
+		# Podziel sumę, żeby otrzymać średnią
+		INVARIANT_MID=$(echo "$INVARIANT_SUM / $IMAGES" | bc -l)
+		# Dodaj to tekstu
+		INVARIANT_TEXT="$INVARIANT_TEXT $INVARIANT_MID,"
+		# Oblicz sigmę
+		SIGMA=$(echo "sqrt(($IMAGES * $SUM1 - $SUM2 * $SUM2) / ($IMAGES * $IMAGES))" | bc -l)
+		# Dodaj do tekstu
+		SIGMA_TEXT="$SIGMA_TEXT $SIGMA,"
+	done
+	
+	# Zastąp .123 na 0.123
+	INVARIANT_TEXT=$(echo "$INVARIANT_TEXT" | sed s/\\./0\\./g)
+	SIGMA_TEXT=$(echo "$SIGMA_TEXT" | sed s/\\./0\\./g)
+	# Usuń ostatni przecinek
+	INVARIANT_TEXT=$(echo "$INVARIANT_TEXT" | sed s/,$//g)
+	SIGMA_TEXT=$(echo "$SIGMA_TEXT" | sed s/,$//g)
+	# Generuje string inicjalizujący strukturę z parametrami
+	echo -e "\tObjectParameters ${VARIABLES[$COUNTER]} = {{$INVARIANT_TEXT }, {$SIGMA_TEXT }, { ${WEIGHTS[$COUNTER]} }};"
+	COUNTER=$(($COUNTER + 1))
+done

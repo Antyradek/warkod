@@ -29,21 +29,22 @@ struct Parameters
 	double lightBlueRadius = 0.9;
 	/// Próg czerni niebieskiego stożka
 	double darkBlueThreshold = 0.2;
-	/// Promień działania pola filtra medianowego
-	int medianFilterRadius = 3;
+	/// Promień działania pola filtra medianowego, pomnożony przez mniejszy bok obrazu
+	double medianFilterRadius = 0.002;
 	/// Szerokość otwarcia jako ułamek węższego boku obrazu, będzie zaokrąglone do całkowitych ilości pikseli
 	double openingDepth = 0.003;
 	/// Ilość najlepszych dopasowań do porównania między sobą
-	int bestObjectsComparisonDepth = 10;
+	size_t bestObjectsComparisonDepth = 5;
 	/// Przy miękkim porównywaniu, jaka jest tolerancja większej długości
 	double softComparisonParameter = 0.3;
 	/// Waga bliskości przy szukaniu konfiguracji, w przeliczeniu do mniejszej szerokości
 	double distanceWeight = 0.2;
+	/// Kara przy porównywaniu odległości obiektów za niższy indeks (gorsze dopasowanie)
+	double indexPenality = 1;
 	
-	ObjectParameters arrowParams = {{ 0, 0, 0, 0.00099014, 0, 0.000140286, 0, 0, -4.03119e-05, 0 }, { 0, 0, 0, 1, 0, 1, 0, 0, 0.8, 0 }, 0.002 };
-	ObjectParameters letterWParams = {{ 0, 0, 0, 0, 0, -1.54905e-05, 0, 0, -1.10516e-05, 0 }, { 0, 0, 0, 0, 0, 1.5, 0, 0, 1.5, 0 }, 0.002 };
+	ObjectParameters arrowParams = {{ 0, 0, 0, 0.00079014, 0, 0.000100286, 0, 0, -4.03119e-05, 0 }, { 0, 0, 0, 1.1, 0, 1.2, 0, 0, 0.4, 0 }, 0.0025 };
+	ObjectParameters letterWParams = {{ 0, 0, 0, 0, 0, -1.54905e-05, 0, 0, -1.10516e-05, 0 }, { 0, 0, 0, 0, 0, 1.5, 0, 0, 1.5, 0 }, 0.001 };
 	ObjectParameters letterKParams = {{ 0, 0, 0, 0.000242899, 0, 0, 0, -3.99919e-05, -3.10566e-06, 0 }, { 0, 0, 0, 0.8, 0, 0, 0, 0.8, 1, 0 }, 0.0008 };
 	ObjectParameters letterDParams = {{ 0, 0, 0, 0, 0, 0, 0, -5.13758e-05, -5.55874e-06, 0 }, { 0, 0, 0, 0, 0, 0, 0, 1, 0.6, 0 }, 0.001 };
-
 };
 }

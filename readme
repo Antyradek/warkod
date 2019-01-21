@@ -16,6 +16,9 @@ Licencja GPL.
 Projekt używa:
 • opencv (testowane na wersji 4.0.0)
 • pthread
+Dla Ubuntu biblioteka OpenCV jest w pakietach:
+• libopencv-core-dev
+• libopencv-highgui-dev
 
 Algorytmy zostały zaimplementowane w C++, obiektowo. 
 Co oznacza, że program będzie wolniejszy niż alternatywne implementacje w C, bazujące na tablicach, raczej niż na kontenerach.
